@@ -1,0 +1,8 @@
+usr/bin/arclight-settings usr/bin/astgenne-settings
+usr/bin/arclight-settings usr/bin/yydaniel-settings
+usr/bin/arclight-session usr/bin/yydaniel-session
+usr/libexec/arclight-session usr/libexec/yydaniel-session
+usr/libexec/arclight-system-policy usr/libexec/yydaniel-system-policy
+usr/bin/arclight-file-tools usr/bin/astgenne-file-tools
+usr/bin/arclight-screenshot usr/bin/astgenne-screenshot
+usr/bin/arclight-archive usr/bin/astgenne-archive

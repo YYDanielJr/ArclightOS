@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Safely Remove Drive
+Name[zh_CN]=安全移除设备
+Exec=arclight-file-tools drives
+Icon=media-eject
+Categories=System;Utility;

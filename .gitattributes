@@ -1,0 +1,16 @@
+* text=auto
+*.sh text eol=lf
+*.py text eol=lf
+*.c text eol=lf
+*.cpp text eol=lf
+*.hpp text eol=lf
+Makefile text eol=lf
+**/debian/rules text eol=lf
+**/debian/postinst text eol=lf
+**/debian/preinst text eol=lf
+**/debian/postrm text eol=lf
+live/config/* text eol=lf
+*.deb binary
+*.iso binary
+*.tar.* binary
+*.png binary

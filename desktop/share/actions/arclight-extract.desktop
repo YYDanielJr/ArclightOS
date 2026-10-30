@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Action
+Name=Extract…
+Name[zh_CN]=解压…
+Icon=package-x-generic
+Profiles=extract;
+
+[X-Action-Profile extract]
+MimeTypes=application/zip;application/x-7z-compressed;application/x-rar;application/vnd.rar;application/x-tar;application/gzip;application/x-gzip;application/x-bzip2;application/x-xz;application/zstd;application/x-zstd-compressed-tar;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-xz-compressed-tar;
+SelectionCount=>0
+Exec=arclight-file-tools extract %F

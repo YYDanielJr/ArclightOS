@@ -1,0 +1,23 @@
+Source: arclight-branding
+Section: misc
+Priority: optional
+Maintainer: YYDaniel <yydaniel@localhost>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: arclight-branding
+Architecture: all
+Breaks: astgenne-branding (<< 0.2.0)
+Replaces: astgenne-branding (<< 0.2.0)
+Depends: ${misc:Depends}
+Description: ArclightOS release identification and boot menu branding
+ Provides release information for the Debian Trixie based ArclightOS.
+ Original Debian release files are preserved using package diversions.
+
+Package: astgenne-branding
+Architecture: all
+Section: oldlibs
+Depends: ${misc:Depends}, arclight-branding (= ${binary:Version})
+Description: Transitional package for ArclightOS branding
+ Installs the new release identity while preserving Debian release files.

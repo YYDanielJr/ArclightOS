@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Arclight Screenshot
+Name[zh_CN]=弧光截图
+Comment=Select, annotate, save or copy a screenshot
+Comment[zh_CN]=选区截图、标注、马赛克、保存及复制
+Exec=arclight-screenshot
+Icon=applets-screenshooter
+Categories=Utility;Graphics;
+Actions=Fullscreen;
+
+[Desktop Action Fullscreen]
+Name=Capture Full Screen
+Name[zh_CN]=截取全屏
+Exec=arclight-screenshot --fullscreen

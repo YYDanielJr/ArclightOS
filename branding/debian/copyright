@@ -1,0 +1,11 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ArclightOS branding
+
+Files: *
+Copyright: 2026 YYDaniel
+License: GPL-3+
+ This program is free software: you can redistribute it and/or modify it
+ under the terms of the GNU General Public License, version 3 or later.
+ .
+ On Debian systems the complete license is in
+ /usr/share/common-licenses/GPL-3.

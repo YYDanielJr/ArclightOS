@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Arclight Archive Manager
+Name[zh_CN]=弧光压缩文件管理器
+Comment=Browse, create, test and extract archives
+Comment[zh_CN]=浏览、创建、测试与解压压缩文件
+Exec=arclight-archive %f
+Icon=package-x-generic
+Terminal=false
+Categories=Utility;Archiving;Compression;
+MimeType=application/zip;application/x-7z-compressed;application/x-rar;application/vnd.rar;application/x-tar;application/gzip;application/x-compressed-tar;application/x-bzip-compressed-tar;application/x-xz-compressed-tar;

@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+
+raspi-config nonint update_labwc_keyboard
+
+# Only update squeekboard if D-Bus is running
+if systemctl is-active --quiet dbus; then
+    raspi-config nonint update_squeekboard
+else
+    echo "D-Bus is not running, skipping squeekboard configuration" >&2
+fi

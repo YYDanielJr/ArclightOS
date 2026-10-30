@@ -1,0 +1,5 @@
+os-release usr/lib
+05_arclight.cfg etc/default/grub.d
+issue usr/share/arclight
+issue.net usr/share/arclight
+arclightos.svg usr/share/icons/hicolor/scalable/apps

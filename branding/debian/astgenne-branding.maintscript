@@ -1,0 +1,1 @@
+rm_conffile /etc/default/grub.d/05_astgenne.cfg 0.2.0~

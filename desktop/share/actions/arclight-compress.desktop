@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Action
+Name=Compress…
+Name[zh_CN]=压缩…
+Icon=package-x-generic
+Profiles=compress;
+
+[X-Action-Profile compress]
+SelectionCount=>0
+Exec=arclight-file-tools compress %F

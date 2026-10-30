@@ -1,0 +1,6 @@
+# Ascalon is the primary kernel. Keep Debian stable/security fallback updates,
+# but do not migrate its generic metapackages to the backports kernel series.
+# Do not pin linux-libc-dev: userspace development headers follow Debian.
+Package: linux-image-amd64 linux-headers-amd64
+Pin: release n=trixie-backports
+Pin-Priority: -1

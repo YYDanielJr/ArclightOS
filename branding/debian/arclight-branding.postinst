@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+if [ "$1" = configure ]; then
+    install -m 644 /usr/share/arclight/issue /etc/issue
+    install -m 644 /usr/share/arclight/issue.net /etc/issue.net
+fi
+if [ "$1" = configure ] && [ -e /boot/grub/grub.cfg ] && command -v update-grub >/dev/null; then
+    update-grub
+fi

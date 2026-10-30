@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Arclight Settings
+Name[zh_CN]=弧光系统设置
+Comment=Configure the desktop, devices, network and system
+Comment[zh_CN]=设置桌面、设备、网络和系统
+Exec=arclight-settings
+Icon=preferences-system
+Terminal=false
+Categories=Settings;HardwareSettings;
+Keywords=display;scale;power;network;bluetooth;language;settings;HiDPI;

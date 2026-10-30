@@ -1,0 +1,12 @@
+{
+  "schema": "arclight.release.v1",
+  "id": "20261031",
+  "name": "ArclightOS",
+  "kernel": "AscalonKernel",
+  "iso": "arclightos-trixie-amd64.iso",
+  "source_archive": "arclightos-source-20261031-r3.tar.xz",
+  "release_source_archive": "arclightos-source-20261031-release.tar.xz",
+  "legacy_iso": "astgenne-os-trixie-amd64.iso",
+  "legacy_iso_sha256": "b7fa35f4c73ce63265fcece1df72873fd52815eeb143ddb3444ed2deed97494b",
+  "fallback_kernel": "6.12.113+deb13.1-amd64"
+}

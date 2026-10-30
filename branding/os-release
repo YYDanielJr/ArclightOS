@@ -1,0 +1,7 @@
+PRETTY_NAME="ArclightOS 13 (trixie)"
+NAME="ArclightOS"
+VERSION_ID="13"
+VERSION="13 (trixie)"
+VERSION_CODENAME=trixie
+ID=arclight
+ID_LIKE=debian

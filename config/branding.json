@@ -1,0 +1,11 @@
+{
+  "os_name": "ArclightOS",
+  "os_name_zh": "\u5f27\u5149\u7cfb\u7edf",
+  "os_id": "arclight",
+  "kernel_name": "AscalonKernel",
+  "kernel_name_zh": "\u963f\u65af\u5361\u7eb6\u5185\u6838",
+  "kernel_package": "ascalon-kernel",
+  "legacy_kernel_package": "astesia-kernel",
+  "settings_command": "arclight-settings",
+  "branding_version": "0.2.0"
+}

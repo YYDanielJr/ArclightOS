@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+if [ "$1" = install ] || [ "$1" = upgrade ]; then
+    for path in /etc/os-release /usr/lib/os-release /etc/issue /etc/issue.net; do
+        owner=$(dpkg-divert --listpackage "$path")
+        if [ "$owner" = arclight-branding ]; then continue; fi
+        if [ "$owner" = astgenne-branding ]; then
+            dpkg-divert --package astgenne-branding --remove --no-rename --divert "$path.debian" "$path"
+            dpkg-divert --package arclight-branding --add --no-rename --divert "$path.debian" "$path"
+            continue
+        fi
+        test -z "$owner"
+        test ! -e "$path.debian" && test ! -L "$path.debian"
+        cp -a "$path" "$path.debian"
+        dpkg-divert --package arclight-branding --add --no-rename --divert "$path.debian" "$path"
+    done
+fi

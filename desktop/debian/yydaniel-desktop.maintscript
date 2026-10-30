@@ -1,0 +1,2 @@
+rm_conffile /etc/xdg/autostart/yydaniel-session.desktop 0.7.0~
+rm_conffile /etc/apt/preferences.d/80-astgenne-kernel-policy 0.7.0~

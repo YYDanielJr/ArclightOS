@@ -1,0 +1,13 @@
+arclight-branding (0.2.0) unstable; urgency=medium
+
+  * Rename the system to ArclightOS and kernel to AscalonKernel.
+  * Preserve previous release records and provide upgrade compatibility.
+
+ -- YYDaniel <yydaniel@localhost>  Fri, 30 Oct 2026 23:00:00 +0800
+
+yydaniel-branding (0.1.0) trixie; urgency=medium
+
+  * Introduce Astgenne OS release information and GRUB distributor name.
+  * Preserve and restore the original Debian release files on removal.
+
+ -- YYDaniel <yydaniel@localhost>  Wed, 28 Oct 2026 11:40:00 +0800

@@ -1,0 +1,106 @@
+arclight-desktop (0.7.0) unstable; urgency=medium
+
+  * Rename the system to ArclightOS and kernel to AscalonKernel.
+  * Preserve previous release records and provide upgrade compatibility.
+
+ -- YYDaniel <yydaniel@localhost>  Fri, 30 Oct 2026 23:00:00 +0800
+
+yydaniel-desktop (0.6.0) trixie; urgency=medium
+
+  * Compact settings spacing, align read-only details in columns and wrap
+    adjacent action buttons horizontally while retaining Pi theme sizing.
+  * Reduce header and notebook padding and correct the About version.
+  * Add per-file and overall archive progress with actual input/output sizes,
+    ratio, file counts, speed, elapsed time and estimated remaining time.
+  * Add cooperative pause/resume, background progress and retained completion
+    summaries; mark buffered 7z output as unavailable until written.
+  * Verify actual compression progress, byte counts and cancellation cleanup.
+
+ -- YYDaniel <yydaniel@localhost>  Fri, 30 Oct 2026 22:03:36 +0800
+
+yydaniel-desktop (0.5.1) trixie; urgency=medium
+
+  * Start Fcitx independently during the live repair, so its retained log
+    descriptors cannot keep the repair helper waiting.
+  * Exclude explicit-operation arguments from persistent page drafts.
+  * Add migration idempotence and independent notebook Apply checks.
+
+ -- YYDaniel <yydaniel@localhost>  Fri, 30 Oct 2026 21:35:00 +0800
+
+yydaniel-desktop (0.5.0) trixie; urgency=medium
+
+  * Serialize labwc input-method variables without literal shell quotes, with
+    a backed-up migration and an explicit live-session repair command.
+  * Stage settings per page and apply changed groups from the header button.
+  * Defer Pi module change handlers until page Apply; preserve failed drafts.
+  * Add window-aware screenshot selection and more annotation tools and redo.
+  * Replace the archive launcher with a native GTK/libarchive manager.
+  * Validate archive paths, reject links, skip conflicts by default and create
+    completed archives and extracted files through temporary files.
+
+ -- YYDaniel <yydaniel@localhost>  Fri, 30 Oct 2026 21:30:00 +0800
+
+yydaniel-desktop (0.4.1) trixie; urgency=medium
+
+  * Write kanshi profiles with the connector name, so the saved scaling is
+    actually matched on the next session.
+  * Restart kanshi after applying display settings instead of sending SIGHUP,
+    which kanshi does not use to reload profiles.
+  * Reapply the saved display profile after system resume.
+
+ -- YYDaniel <yydaniel@localhost>  Fri, 30 Oct 2026 20:30:00 +0800
+
+yydaniel-desktop (0.4.0) trixie; urgency=medium
+
+  * Keep Debian fallback kernel metapackages out of backports.
+  * Allow local active administrators to mount internal NTFS data volumes.
+  * Extend Pi file manager actions with terminals, archives and safe power off.
+  * Add native screenshot selection, annotation, mosaic, save and clipboard.
+  * Bound settings sizing and add touchpad and Windows local RTC controls.
+  * Add verified offline ISO upgrade planning and installation.
+
+ -- YYDaniel <yydaniel@localhost>  Fri, 30 Oct 2026 12:00:00 +0800
+
+yydaniel-desktop (0.3.2) trixie; urgency=medium
+
+  * Adopt Astgenne Settings branding and add the astgenne-settings command.
+  * Keep the existing native executable and configuration paths compatible.
+
+ -- YYDaniel <yydaniel@localhost>  Wed, 28 Oct 2026 11:40:00 +0800
+
+yydaniel-desktop (0.3.1) trixie; urgency=medium
+
+  * Give every page and group consistent content padding.
+  * Use Pi theme natural control heights and center controls within rows.
+  * Inspect each category and notebook tab with live allocation measurements.
+
+ -- YYDaniel <yydaniel@localhost>  Wed, 28 Oct 2026 00:10:00 +0800
+
+yydaniel-desktop (0.3.0) trixie; urgency=medium
+
+  * Replace the Python prototype with C++17 GTK 3 native ELF programs.
+  * Port the settings host, display watchdog, session and policy helpers.
+  * Retain Pi native widgets, 19 categories and finite authenticated actions.
+
+ -- YYDaniel <yydaniel@localhost>  Tue, 27 Oct 2026 20:00:00 +0800
+
+yydaniel-desktop (0.2.0) trixie; urgency=medium
+
+  * Add a unified, searchable settings shell with native Pi Control Centre
+    modules and modern PC service settings.
+  * Add a narrow polkit helper for software sources, components and services.
+
+ -- YYDaniel <yydaniel@localhost>  Tue, 27 Oct 2026 00:00:00 +0000
+
+yydaniel-desktop (0.1.1) trixie; urgency=medium
+
+  * Remove Pi-specific LightDM render-node waits on generic PCs.
+  * Enable realtime audio scheduling and robust disabled-output recovery.
+
+ -- YYDaniel <yydaniel@localhost>  Tue, 27 Oct 2026 00:00:00 +0000
+
+yydaniel-desktop (0.1.0) trixie; urgency=medium
+
+  * Add transactional display settings and modern PC power controls.
+
+ -- YYDaniel <yydaniel@localhost>  Tue, 27 Oct 2026 00:00:00 +0000

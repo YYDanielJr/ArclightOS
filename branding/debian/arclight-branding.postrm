@@ -1,0 +1,17 @@
+#!/bin/sh
+set -e
+case "$1" in
+    remove|abort-install|disappear)
+        for path in /etc/os-release /usr/lib/os-release /etc/issue /etc/issue.net; do
+            if [ "$(dpkg-divert --listpackage "$path")" = arclight-branding ]; then
+                if [ -e "$path.debian" ] || [ -L "$path.debian" ]; then
+                    mv -T "$path.debian" "$path"
+                fi
+                dpkg-divert --package arclight-branding --remove --no-rename --divert "$path.debian" "$path"
+            fi
+        done
+        ;;
+esac
+if [ "$1" = purge ] && [ -e /boot/grub/grub.cfg ] && command -v update-grub >/dev/null; then
+    update-grub
+fi

@@ -1,0 +1,13 @@
+[Desktop Entry]
+Type=Action
+Name=Open Terminal Here
+Name[zh_CN]=在此处打开终端
+Icon=utilities-terminal
+Profiles=terminal;
+TargetContext=true
+TargetLocation=true
+
+[X-Action-Profile terminal]
+MimeTypes=inode/directory;
+SelectionCount==1
+Exec=arclight-file-tools terminal %f

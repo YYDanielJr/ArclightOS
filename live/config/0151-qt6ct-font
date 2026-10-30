@@ -1,0 +1,6 @@
+#!/bin/sh
+set -e
+# Change Qt6ct font size from 12 to 10 to make calamares fit on smaller screens
+if [ -f /etc/xdg/qt6ct/qt6ct.conf ]; then
+  sed -i 's/Nunito Sans,12,/Nunito Sans,10,/g' /etc/xdg/qt6ct/qt6ct.conf
+fi

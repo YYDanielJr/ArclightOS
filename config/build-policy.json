@@ -1,0 +1,10 @@
+{
+  "schema": "arclight.build-policy.v1",
+  "policy": "apt-native-custom-source",
+  "accepted": "2026-10-29",
+  "native_repositories": ["Debian", "Debian Backports", "Raspberry Pi Foundation"],
+  "native_missing_version": "authenticated-same-source-update",
+  "native_full_source_rebuild_required": false,
+  "custom_source_build_required": true,
+  "note": "Upstream distribution packages may use authenticated APT binaries. Local patches, replacement packages and project components require recorded source builds."
+}

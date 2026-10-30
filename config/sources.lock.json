@@ -1,0 +1,61 @@
+{
+  "desktop": {
+    "version": "0.7.0"
+  },
+  "build_dependency_sources": {
+    "nlohmann-json3": "3.11.3-2.1"
+  },
+  "open_base": {
+    "pishutdown": "0.43",
+    "raspberrypi-net-mods": "1.4.4",
+    "wayvnc": "0.10.2-1+rpt1",
+    "live_source": "arclight-live",
+    "live_version": "20251125.1+arclight1",
+    "removed": [
+      "rpi-connect"
+    ],
+    "remote_access": [
+      "wayvnc",
+      "openssh-server"
+    ]
+  },
+  "base_image": {
+    "release": "2026-10-13",
+    "filename": "2026-10-13-raspios-trixie-amd64.iso",
+    "url": "https://mirrors.nju.edu.cn/raspberry-pi-os-images/rpd_x86/images/rpd_x86-2026-10-15/2026-10-13-raspios-trixie-amd64.iso",
+    "upstream": "https://downloads.raspberrypi.com/rpd_x86/images/rpd_x86-2026-10-15/2026-10-13-raspios-trixie-amd64.iso",
+    "sha256": "8a1aadebed97378b02385c1e2ac50d77984eed0d07bfb6cc10ac50d9e74b8135"
+  },
+  "kernel": {
+    "version": "7.3",
+    "release": "7.3.0-ascalonkernel",
+    "debian_version": "7.3-4+arclight1",
+    "meta_debian_version": "7.3-4+arclight1",
+    "filename": "linux-7.3.tar.xz",
+    "url": "https://mirrors.nju.edu.cn/kernel.org/linux/kernel/v7.x/linux-7.3.tar.xz",
+    "upstream": "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.tar.xz",
+    "sha256": "87363c24f10e06321eb362765521094e94471f6bff8bce2d6b3e40f39f004953"
+  },
+  "firmware": {
+    "source": "firmware-nonfree",
+    "version": "20260916-1~bpo13+1",
+    "suite": "trixie-backports"
+  },
+  "bore": {
+    "filename": "0001-bore-cachy.patch",
+    "url": "https://raw.githubusercontent.com/CachyOS/kernel-patches/542948508e7098b6482d8269bc1097733dd27399/7.3/sched/0001-bore-cachy.patch",
+    "commit": "542948508e7098b6482d8269bc1097733dd27399",
+    "sha256": "0682dfd0dc074e847fa8f254f7487b811b6f01450bfcfc7de31cbee28c15648f"
+  },
+  "nvidia": {
+    "debian_version": "615.78.08-3+arclight1",
+    "version": "615.78.08",
+    "commit": "1a82fbfda8f321b056eb3568850f9316c5e465c5",
+    "source_url": "https://github.com/NVIDIA/open-gpu-kernel-modules/archive/1a82fbfda8f321b056eb3568850f9316c5e465c5.tar.gz",
+    "source_sha256": "590ee6a5a780f946322edd17f9d235c6664eb7e6839073ac0d68c0f263e7184f",
+    "binary_url": "https://download.nvidia.com/XFree86/Linux-x86_64/615.78.08/NVIDIA-Linux-x86_64-615.78.08.run",
+    "binary_sha256": "3e3f6dddc2ee767a08185300af7be3cb286ece76698d2dde3524599782d07ffe",
+    "compatibility_patch_url": "https://raw.githubusercontent.com/CachyOS/kernel-patches/542948508e7098b6482d8269bc1097733dd27399/7.3/misc/nvidia/0004-Open-sysfs-config-from-the-userspace-root-on-7.3.patch",
+    "compatibility_patch_sha256": "a6bbae1da91bead7030ed78a161dedd2dc8d38d495ef87af24673642ef1d7ca9"
+  }
+}

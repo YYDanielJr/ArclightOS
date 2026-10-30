@@ -1,0 +1,2 @@
+config/* usr/lib/live/config
+provenance.json usr/share/doc/rpi-live

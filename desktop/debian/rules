@@ -1,0 +1,20 @@
+#!/usr/bin/make -f
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+%:
+	dh $@
+
+override_dh_auto_build:
+	dh_auto_build
+	cp /usr/share/doc/nlohmann-json3-dev/copyright nlohmann-json-copyright
+	cp /usr/share/doc/wayland-protocols/copyright wayland-protocols-copyright
+	for protocol in ext-foreign-toplevel-list ext-image-capture-source ext-image-copy-capture; do \
+	    sed -n '/<copyright>/,/<\/copyright>/{ /<copyright>/d; /<\/copyright>/d; p; }' \
+	    /usr/share/wayland-protocols/staging/$$protocol/$$protocol-v1.xml >> wayland-protocols-copyright; \
+	done
+
+override_dh_auto_test:
+	$(MAKE) check
+
+override_dh_auto_clean:
+	dh_auto_clean
+	rm -f nlohmann-json-copyright wayland-protocols-copyright

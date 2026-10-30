@@ -1,0 +1,15 @@
+# Generic PC integration: render nodes are optional and may have another index.
+[Unit]
+Description=Light Display Manager
+Documentation=man:lightdm(1)
+After=systemd-user-sessions.service plymouth-quit.service
+Conflicts=plymouth-quit.service
+OnFailure=plymouth-quit.service
+
+[Service]
+ExecStart=/usr/sbin/lightdm
+Restart=always
+BusName=org.freedesktop.DisplayManager
+
+[Install]
+Alias=display-manager.service

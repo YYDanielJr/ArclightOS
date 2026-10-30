@@ -1,0 +1,7 @@
+{
+  "filename": "boot-source-plan.json.xz",
+  "plan_sha256": "46c619f46584b23f5d4cf358d5ba3fcc31cfb4d16ac213fc284d865a81259ad8",
+  "compressed_sha256": "22122ed29046effd3cb73a8ff3278c95696c97bf35bddd868817b3fb4893e09d",
+  "extra_sources": 2,
+  "extra_binaries": 10
+}

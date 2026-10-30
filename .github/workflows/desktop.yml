@@ -1,0 +1,25 @@
+name: Desktop settings package
+on:
+  workflow_dispatch:
+  push:
+    paths: ['desktop/**', 'config/sources.lock.json', 'scripts/build-desktop.sh', '.github/workflows/desktop.yml']
+  pull_request:
+    paths: ['desktop/**', 'config/sources.lock.json', 'scripts/build-desktop.sh', '.github/workflows/desktop.yml']
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: debian:trixie
+    steps:
+      - uses: actions/checkout@v7
+      - run: >-
+          apt-get update && apt-get install -y --no-install-recommends
+          build-essential debhelper devscripts python3 rsync pkg-config
+          libgtk-3-dev libxml2-dev libarchive-dev libwayland-dev libx11-dev
+          wayland-protocols libcrypt-dev nlohmann-json3-dev
+      - run: bash scripts/build-desktop.sh
+      - uses: actions/upload-artifact@v7
+        with:
+          name: arclight-desktop-trixie
+          path: ../dist/arclight-desktop_*

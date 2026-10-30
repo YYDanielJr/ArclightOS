@@ -1,0 +1,178 @@
+{
+  "packages": {
+    "flite": {
+      "priority": 118,
+      "jobs": 1,
+      "retry_failed_recipe": 1,
+      "reason": "Serialize the upstream shared generated language-list object to avoid parallel link races"
+    },
+    "curl": {
+      "priority": 119,
+      "setup_hook": "scripts/build-hooks/curl-dns-start.sh",
+      "cleanup_hook": "scripts/build-hooks/curl-dns-stop.sh",
+      "add_depends": [
+        "dnsmasq-base"
+      ],
+      "retry_failed_recipe": 1
+    },
+    "cryptsetup": {
+      "original_version": "2:2.7.5-2",
+      "version": "2:2.7.5-2+astgenne1",
+      "transform": "cryptsetup_jq_padding",
+      "recipe_revision": 1,
+      "reason": "Backport the upstream NUL-padding-aware jq helper in LUKS2 test generators; keep validation tests enabled",
+      "priority": 120
+    },
+    "linux": {
+      "original_version": "6.12.113-1",
+      "version": "6.12.113-1+astgenne1",
+      "transform": "linux_pc_fallback",
+      "recipe_revision": 2,
+      "reason": "Build the ordinary amd64 fallback with refreshed Debian control checksums; omit unused cloud and RT flavours",
+      "profiles": "pkg.linux.nokerneldbginfo,pkg.linux.nokerneldbg,pkg.linux.mintools,pkg.linux.nosource,nodoc,noudeb",
+      "space_gib": 15,
+      "jobs": 4,
+      "priority": 110
+    },
+    "linux-signed-amd64": {
+      "original_version": "6.12.113+1",
+      "version": "6.12.113+1+astgenne2",
+      "transform": "linux_local_wrapper",
+      "recipe_revision": 2,
+      "reason": "Package the locally compiled fallback without reusing Debian signatures for another executable",
+      "profiles": "noudeb",
+      "requires_sources": [
+        "linux"
+      ],
+      "extra_binary_patterns": [
+        "linux-image-6.12.113+deb13.1-amd64-unsigned_6.12.113-1+astgenne1_amd64.deb"
+      ],
+      "binary_renames": {
+        "linux-image-6.12.113+deb13-amd64": "linux-image-6.12.113+deb13.1-amd64"
+      },
+      "priority": 109
+    },
+    "rpi-calamares-settings": {
+      "original_version": "13.0.13+rpt3-1",
+      "version": "13.0.13+rpt3-2+arclight1",
+      "transform": "pi_offline_installer",
+      "recipe_revision": 3,
+      "reason": "ArclightOS installer identity with offline installation and removal safeguards retained",
+      "priority": 117
+    },
+    "grub2": {
+      "priority": 100
+    },
+    "efibootmgr": {
+      "priority": 99
+    },
+    "busybox": {
+      "priority": 90
+    },
+    "gtk2-engines-pixflat": {
+      "original_version": "0.5",
+      "version": "0.5+astgenne1",
+      "transform": "pixflat_render_test",
+      "recipe_revision": 1,
+      "reason": "Replace the dangling unshipped upstream test-directory target with a native GTK2 engine load and rendering smoke test",
+      "priority": 121,
+      "auxiliary_inputs": [
+        {
+          "path": "scripts/build-tests/pixflat-smoke.c",
+          "sha256": "4d59b5fdb901f9548dedbad156b2771fb79848e82490b0347b391d85d39a00ac"
+        }
+      ]
+    },
+    "gst-plugins-base1.0": {
+      "priority": 124,
+      "setup_hook": "scripts/build-hooks/gstreamer-tests.sh",
+      "add_depends": [
+        "x11-utils"
+      ],
+      "retry_failed_recipe": 1,
+      "recipe_revision": 1,
+      "reason": "Allocate Xvfb displays using the native displayfd protocol and allow fourfold Check test time in the loaded VM; retain assertions"
+    },
+    "gst-plugins-good1.0": {
+      "priority": 124,
+      "setup_hook": "scripts/build-hooks/gstreamer-tests.sh",
+      "add_depends": [
+        "x11-utils"
+      ],
+      "retry_failed_recipe": 1,
+      "recipe_revision": 1,
+      "reason": "Allocate Xvfb displays using the native displayfd protocol and allow fourfold Check test time in the loaded VM; retain assertions"
+    },
+    "gtk+3.0": {
+      "original_version": "1:3.24.49-3+rpt9",
+      "version": "1:3.24.49-3+rpt9+astgenne1",
+      "transform": "gtk3_pixbuf_scale",
+      "recipe_revision": 1,
+      "reason": "Fix Pi pixbuf scale notifications and preserve icon storage when scaling; retain all upstream tests and add a native storage regression check",
+      "priority": 125
+    },
+    "krb5": {
+      "priority": 127,
+      "setup_hook": "scripts/build-hooks/krb5-dns-start.sh",
+      "cleanup_hook": "scripts/build-hooks/krb5-dns-stop.sh",
+      "add_depends": [
+        "dnsmasq-base"
+      ],
+      "retry_failed_recipe": 1,
+      "recipe_revision": 1,
+      "reason": "Provide NXDOMAIN for the does.not.exist negative resolver fixture inside the disposable chroot; preserve Kerberos assertions and inner test log"
+    },
+    "dwarves": {
+      "priority": 128,
+      "reason": "Build the exact pahole dependency of the locally rebuilt fallback headers for offline DKMS"
+    },
+    "qtbase-opensource-src": {
+      "space_gib": 25,
+      "reason": "Account for native C++ working-tree size and memory in the bounded large-build scheduler"
+    },
+    "qtdeclarative-opensource-src": {
+      "space_gib": 20,
+      "reason": "Account for native C++ working-tree size and memory in the bounded large-build scheduler"
+    },
+    "qt6-declarative": {
+      "space_gib": 25,
+      "reason": "Account for native C++ working-tree size and memory in the bounded large-build scheduler"
+    },
+    "onnxruntime": {
+      "space_gib": 30,
+      "reason": "Account for native C++ working-tree size and memory in the bounded large-build scheduler"
+    },
+    "ffmpeg": {
+      "space_gib": 20,
+      "reason": "Account for native C++ working-tree size and memory in the bounded large-build scheduler"
+    },
+    "libcaca": {
+      "priority": 130,
+      "setup_hook": "scripts/build-hooks/libcaca-doc-environment.sh",
+      "retry_failed_recipe": 1,
+      "recipe_revision": 1,
+      "reason": "Match optional TeX detection to the existing Debian patch that disables PDF docs; retain HTML/man docs and tests, unchanged DSC"
+    },
+    "openssl": {
+      "priority": 131,
+      "setup_hook": "scripts/build-hooks/openssl-afalg-probe.sh",
+      "add_depends": [
+        "python3-minimal"
+      ],
+      "retry_failed_recipe": 1,
+      "recipe_revision": 1,
+      "reason": "Provide and probe the host kernel AF_ALG CBC AES module fixture; keep all crypto assertions and the exact source"
+    },
+    "openldap": {
+      "priority": 132,
+      "setup_hook": "scripts/build-hooks/openldap-dns-start.sh",
+      "cleanup_hook": "scripts/build-hooks/openldap-dns-stop.sh",
+      "add_depends": [
+        "dnsmasq-base"
+      ],
+      "retry_failed_recipe": 1,
+      "recipe_revision": 1,
+      "reason": "Return NXDOMAIN for the deliberately nonexistent remoteauth fixture host we; retain certificate verification and all authentication tests"
+    }
+  }
+}

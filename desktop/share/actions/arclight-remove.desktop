@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Action
+Name=Safely Remove a Drive…
+Name[zh_CN]=安全移除设备…
+Icon=media-eject
+Profiles=remove;
+TargetContext=true
+TargetLocation=true
+
+[X-Action-Profile remove]
+MimeTypes=inode/directory;
+Exec=arclight-file-tools drives

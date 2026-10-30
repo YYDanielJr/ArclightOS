@@ -1,0 +1,45 @@
+#!/bin/sh
+# Reapply the saved display profile after system resume.
+#
+# labwc resets per-output scale to 1.0 on resume while the output stays
+# connected, so kanshi does not see an output change and keeps the old state.
+# Restart kanshi for active Wayland sessions that already run it.  The new
+# process is owned by a transient systemd service so it survives the sleep
+# hook's own session; only existing kanshi processes are touched.
+set -u
+
+[ "${1:-}" = "post" ] || exit 0
+[ -d /run/user ] || exit 0
+
+# Let the compositor and DRM connectors settle after resume.
+sleep 1
+
+seen=""
+for socket in /run/user/*/wayland-*; do
+    [ -S "$socket" ] || continue
+    uid=$(/usr/bin/stat -c '%u' "$socket" 2>/dev/null) || continue
+    case " $seen " in
+        *" $uid "*) continue ;;
+    esac
+    user=$(/usr/bin/id -nu "$uid" 2>/dev/null) || continue
+    home=$(/usr/bin/getent passwd "$uid" 2>/dev/null | /usr/bin/cut -d: -f6)
+    [ -n "$home" ] || continue
+    gid=$(/usr/bin/id -g "$uid" 2>/dev/null) || continue
+    /usr/bin/pgrep -u "$uid" -x kanshi >/dev/null 2>&1 || continue
+    seen="$seen $uid"
+    runtime="/run/user/$uid"
+    display="${socket##*/}"
+    /usr/bin/logger -t arclight-kanshi-resume \
+        "restarting kanshi for uid $uid on $display"
+    /usr/bin/systemctl stop "arclight-kanshi-$uid.service" >/dev/null 2>&1 || true
+    /usr/bin/pkill -TERM -u "$uid" -x kanshi >/dev/null 2>&1 || true
+    i=0
+    while /usr/bin/pgrep -u "$uid" -x kanshi >/dev/null 2>&1 && [ "$i" -lt 10 ]; do
+        i=$((i + 1))
+        /bin/sleep 0.2
+    done
+    /usr/bin/systemd-run --unit="arclight-kanshi-$uid" --uid="$uid" --gid="$gid" \
+        --setenv="HOME=$home" --setenv="XDG_RUNTIME_DIR=$runtime" \
+        --setenv="WAYLAND_DISPLAY=$display" --collect /usr/bin/kanshi
+done
+exit 0

@@ -1,0 +1,14 @@
+Source: arclight-live
+Section: misc
+Priority: optional
+Maintainer: YYDaniel <yydaniel@localhost>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: rpi-live
+Architecture: all
+Depends: ${misc:Depends}, raspi-config
+Description: Source-built live-session integration for ArclightOS
+ Restores Raspberry Pi's keyboard and Qt installer font integration using
+ the complete BSD shell source from the pinned official ISO.

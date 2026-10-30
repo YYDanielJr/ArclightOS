@@ -1,0 +1,28 @@
+#!/bin/sh
+set -e
+if [ "$1" = configure ]; then
+    # Move only files owned by the previous settings helper. Preserve every old
+    # value in a private backup; a pre-existing new-name file takes precedence.
+    stamp=$(date -u +%Y%m%dT%H%M%SZ)
+    migrate() {
+        old=$1
+        new=$2
+        if [ -f "$old" ] && [ ! -L "$old" ]; then
+            backup=/var/backups/arclight-rename/$stamp
+            install -d -m 700 "$backup"
+            install -d -m 700 "$backup$(dirname "$old")"
+            cp -a "$old" "$backup$old"
+            if [ ! -e "$new" ]; then mv "$old" "$new"; else rm -f "$old"; fi
+        fi
+    }
+    migrate /etc/systemd/journald.conf.d/99-yydaniel-settings.conf /etc/systemd/journald.conf.d/99-arclight-settings.conf
+    migrate /etc/systemd/logind.conf.d/80-yydaniel.conf /etc/systemd/logind.conf.d/80-arclight.conf
+    migrate /etc/default/grub.d/92-yydaniel-net-names.cfg /etc/default/grub.d/92-arclight-net-names.cfg
+    migrate /etc/apt/apt.conf.d/80yydaniel-proxy /etc/apt/apt.conf.d/80arclight-proxy
+    migrate /etc/apt/apt.conf.d/52yydaniel-periodic /etc/apt/apt.conf.d/52arclight-periodic
+    migrate /etc/apt/sources.list.d/astgenne-backports.sources /etc/apt/sources.list.d/arclight-backports.sources
+    migrate /etc/apt/sources.list.d/yydaniel-backports.sources /etc/apt/sources.list.d/arclight-backports.sources
+fi
+if [ "$1" = configure ] && command -v systemctl >/dev/null; then
+    systemctl daemon-reload || true
+fi

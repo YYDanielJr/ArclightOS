@@ -1,0 +1,29 @@
+Source: arclight-desktop
+Section: x11
+Priority: optional
+Maintainer: YYDaniel <yydaniel@localhost>
+Build-Depends: debhelper-compat (= 13), g++, pkg-config, libgtk-3-dev, libxml2-dev, libarchive-dev, libwayland-dev, libx11-dev, wayland-protocols (>= 1.38), libcrypt-dev, nlohmann-json3-dev
+Standards-Version: 4.7.0
+Rules-Requires-Root: no
+
+Package: arclight-desktop
+Architecture: any
+Breaks: yydaniel-desktop (<< 0.7.0)
+Replaces: yydaniel-desktop (<< 0.7.0)
+Depends: ${misc:Depends}, ${shlibs:Depends}, lightdm, rtkit,
+ wlr-randr, kanshi, power-profiles-daemon, polkitd, pkexec, pciutils,
+ swayidle, swaylock, wlopm, network-manager, pulseaudio-utils, im-config,
+ wayvnc, openssl, accountsservice, rc-gui, pipanel, rasputin, pished, rpinters, merp,
+ wf-panel-pi, raindrop, raspi-config, grim, slurp, wl-clipboard,
+ udisks2, gvfs, pcmanfm-pi, x-terminal-emulator, util-linux
+Description: Modern PC settings for Raspberry Pi Desktop
+ Native C++ settings with Raspberry Pi GTK widgets, per-output fractional
+ scaling, crash-safe rollback, power, network, audio and system policies.
+ The graphical session remains Raspberry Pi Desktop with labwc.
+
+Package: yydaniel-desktop
+Architecture: all
+Section: oldlibs
+Depends: ${misc:Depends}, arclight-desktop (= ${binary:Version})
+Description: Transitional package for the ArclightOS desktop
+ Installs the renamed native ArclightOS settings and desktop tools.

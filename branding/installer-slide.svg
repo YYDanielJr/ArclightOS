@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 640">
+  <rect width="1200" height="640" fill="#f5f7f9"/>
+  <circle cx="275" cy="270" r="105" fill="none" stroke="#87919b" stroke-width="20" stroke-dasharray="530 140" transform="rotate(15 275 270)"/>
+  <path d="m300 143-88 136h64l-24 110 96-155h-64z" fill="#00a9e9"/>
+  <g font-family="sans-serif" fill="#252b31">
+    <text x="450" y="270" font-size="76" font-weight="600">ArclightOS</text>
+    <text x="454" y="326" font-size="29" fill="#59636c">Powered by AscalonKernel</text>
+    <text x="600" y="498" text-anchor="middle" font-size="25" fill="#59636c">A responsive desktop. Ready for everyday work.</text>
+  </g>
+</svg>

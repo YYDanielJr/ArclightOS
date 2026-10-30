@@ -1,0 +1,10 @@
+// Only the active local administrator may mount internal Windows data volumes.
+// Keep unlock, formatting, fstab, other-seat and all other authorization intact.
+polkit.addRule(function(action, subject) {
+    if (action.id === "org.freedesktop.udisks2.filesystem-mount-system" &&
+        subject.local && subject.active && subject.isInGroup("sudo")) {
+        var type = action.lookup("id.type");
+        if (type === "ntfs" || type === "ntfs3")
+            return polkit.Result.YES;
+    }
+});

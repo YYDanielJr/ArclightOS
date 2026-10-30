@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Arclight Session Settings
+Exec=arclight-session
+NoDisplay=true
+X-GNOME-Autostart-enabled=true

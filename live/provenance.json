@@ -1,0 +1,14 @@
+{
+  "origin": "Raspberry Pi Desktop 2026-10-13 amd64 ISO, rpi-live 20251125",
+  "form": "Complete installed shell source, upstream BSD-3-Clause license preserved; Debian build recipe reconstructed here.",
+  "files": [
+    {
+      "file": "0151-keyboard-fix",
+      "sha256": "5c5f9b24a872a86b803f541ced940c2e6f3c8d080f10b2a30922b0aef8addeb3"
+    },
+    {
+      "file": "0151-qt6ct-font",
+      "sha256": "68975b91187a751f7571249773840885cff318c51e187140cacc41bdc7106c29"
+    }
+  ]
+}
