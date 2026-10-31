@@ -52,12 +52,14 @@ dv=lock['desktop']['version'];bv=brand['branding_version'];lv=lock['open_base'][
 packages=[(f'linux-image-{kernel["release"]}',kv,'amd64','ascalon-linux','kernel-build.log'),
           (f'linux-headers-{kernel["release"]}',kv,'amd64','ascalon-linux','kernel-build.log')]
 packages += [(n,mv,'amd64','ascalon-kernel','kernel-build.log') for n in ['ascalon-kernel','astesia-kernel','yydanielkernel']]
-packages += [('arclight-desktop',dv,'amd64','arclight-desktop','desktop-build.log'),
-             ('yydaniel-desktop',dv,'all','arclight-desktop','desktop-build.log'),
+desktop_log=f'desktop-{dv}-build.log' if (work/'logs'/f'desktop-{dv}-build.log').exists() else 'desktop-build.log'
+packages += [('arclight-desktop',dv,'amd64','arclight-desktop',desktop_log),
+             ('yydaniel-desktop',dv,'all','arclight-desktop',desktop_log),
              ('arclight-branding',bv,'all','arclight-branding','branding-build.log'),
              ('astgenne-branding',bv,'all','arclight-branding','branding-build.log'),
              ('rpi-live',lv,'all','arclight-live','live-build.log'),
-             ('rpi-calamares-settings','13.0.13+rpt3-2+arclight1','all','rpi-calamares-settings','installer-build.log')]
+             ('rpi-calamares-settings',lock['open_base']['installer_debian_version'],'all','rpi-calamares-settings',
+              'installer-'+lock['open_base']['installer_debian_version']+'-build.log')]
 custom=[]
 for name,version,arch,source,log in packages:
     path=dist/f'{name}_{version}_{arch}.deb';c=control(path)
@@ -73,6 +75,8 @@ for name,version,arch,source,log in packages:
         proof=dict(kind='project-source-build',source=source,source_version=version,source_inputs=inputs,
             buildinfo=[evidence(f) for f in infos],logs=[evidence(work/'logs'/log)],
             packaging_recipe=evidence(repo/'scripts/package-kernel-meta.py') if source=='ascalon-kernel' else None)
+        if source=='arclight-desktop' and (work/'logs/desktop-0.7.1-before-unit-start-fix.log').exists() and version=='0.7.1':
+            proof['logs'].append(evidence(work/'logs/desktop-0.7.1-before-unit-start-fix.log'))
         assert proof['buildinfo'] or proof['packaging_recipe']
         proofs[key]=proof
     custom.append(dict(binary=name,version=version,source=source,source_version=version))

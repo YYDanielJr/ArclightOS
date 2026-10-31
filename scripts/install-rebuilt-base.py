@@ -79,7 +79,7 @@ if a.finish_pending:
  (a.root.parent/'package-reconciliation.json').write_text(json.dumps(dict(
   receipt_sha256=hashlib.file_digest(a.receipt.open('rb'),'sha256').hexdigest(),
   resumed_configuration=True,pending_before=pending,configure_command=prefix+['dpkg','--configure','-a'],
-  original_transaction_log='offline-root-install.attempt-001.log',isolated_pid_namespace=True,
+  original_transaction_logs=sorted(p.name for p in a.root.parent.glob('offline-root-install.attempt-*.log')),isolated_pid_namespace=True,
   exact_package_set_verified=True,installed=records),indent=2)+'\n')
  leftover=a.root/'tmp/arclight-rebuilt-debs'
  assert leftover.resolve().is_relative_to(a.root)
@@ -131,7 +131,8 @@ if a.isolated_pid:
  prefix=['unshare','--mount','--propagation','private','--pid','--fork','--mount-proc='+str(a.root/'proc'),*prefix]
 prefix+=['env','PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin','DEBIAN_FRONTEND=noninteractive']
 apt=['apt-get','install','--reinstall','--allow-downgrades','-y',
- '--no-install-recommends','-o','Dpkg::Options::=--force-confold',*paths]
+ '--no-install-recommends','-o','Dpkg::Options::=--force-confold',
+ '-o','DPkg::Path=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin',*paths]
 if receipt:apt.insert(2,'--no-download')
 removed=installed-required if a.reconcile_image else {(x['image_binary'],x['architecture']) for x in replacements if (x['image_binary'],x['architecture']) in installed}
 apt += [name+(':'+arch if arch!='all' else '')+'-' for name,arch in sorted(removed)]

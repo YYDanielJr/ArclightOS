@@ -56,9 +56,14 @@ cache=apt.Cache();selected=[];changes=[]
 allowed={'Debian','Debian Backports','Raspberry Pi Foundation'}
 native_records=[r for r in old['selected'] if r['provenance']=='authenticated-apt']
 # Runtime helper introduced by the native screenshot/clipboard application.
-if not any(r['package']=='wl-clipboard' for r in native_records):
-    native_records.append(dict(package='wl-clipboard',version='',source='wl-clipboard',
-        provenance='authenticated-apt',image_binary='wl-clipboard',image_version=''))
+qml_helpers=['qml6-module-qtquick','qml6-module-qtquick-window','qml6-module-qtqml',
+             'qml6-module-qtqml-models','qml6-module-qtqml-workerscript']
+qt_version=next(r['version'] for r in native_records if r['package']=='libqt6quick6')
+for helper in ['wl-clipboard','nvidia-modprobe',*qml_helpers]:
+    if not any(r['package']==helper for r in native_records):
+        native_records.append(dict(package=helper,version=qt_version if helper in qml_helpers else '',
+            source='qt6-declarative' if helper in qml_helpers else helper,
+            provenance='authenticated-apt',image_binary=helper,image_version=''))
 for r in native_records:
     if r['provenance']!='authenticated-apt':continue
     package=cache[r['package']]
@@ -68,6 +73,7 @@ for r in native_records:
         versions=[v for v in package.versions if v.source_name==r['source'] and trusted(v)]
     assert versions,('No authenticated same-source binary',r['package'])
     v=versions[0]
+    if r['package'] in qml_helpers:assert v.version==qt_version,'Keep the installer QML modules on the existing Qt6 version'
     uris=[u for u in v.uris if u.startswith(('https://mirrors.ustc.edu.cn/debian/',
           'https://mirrors.ustc.edu.cn/debian-security/','https://archive.raspberrypi.com/debian/'))]
     assert uris,(r['package'],v.uris)
@@ -77,7 +83,7 @@ for r in native_records:
               bytes=int(v.record['Size']),sha256=v.record['SHA256'],file=str(target),uris=uris,
               repositories=[dict(origin=o.origin,site=o.site,archive=o.archive,component=o.component)
                             for o in v.origins if o.trusted and o.origin in allowed],
-              image_binary=r['image_binary'],image_version=r['image_version'])
+              image_binary=r['image_binary'],image_version=r['image_version'] or v.version)
     selected.append(item)
     if v.version!=r['version']:changes.append(dict(package=r['package'],old=r['version'] or None,new=v.version,
         reason='New native desktop runtime dependency' if not r['version'] else

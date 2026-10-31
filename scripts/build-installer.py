@@ -9,14 +9,14 @@ import subprocess
 
 repo=Path(__file__).resolve().parents[1]
 work=Path(os.environ.get('ARCLIGHT_WORK',repo.parent)).resolve()
-version='13.0.13+rpt3-2+arclight1'
+version=json.loads((repo/'config/sources.lock.json').read_text())['open_base']['installer_debian_version']
 origin=work/'baseline/full-rebuild/derived-sources/rpi-calamares-settings_13.0.13+rpt3-1+astgenne2'
 old=json.loads((repo/'dist/astgenne-image-inputs.json').read_text())
 proof=next(s for s in old['source_builds'] if s['source']=='rpi-calamares-settings')
 for item in proof['source_inputs']:
     path=origin/Path(item['file']).name
     with path.open('rb') as f:assert hashlib.file_digest(f,'sha256').hexdigest()==item['sha256']
-tree=work/'build/arclight-installer'
+tree=work/('build/arclight-installer-'+version)
 assert not tree.exists(),'Use a new staging directory for another installer build'
 subprocess.run(['dpkg-source','-x',str(next(origin.glob('*.dsc'))),str(tree)],check=True)
 for name in ['calamares/branding/pios/branding.desc','calamares/branding/pios/show.qml',
@@ -45,11 +45,15 @@ shutil.copy2(repo/'branding/installer-slide.svg',branding/'installer-slide.svg')
 changelog=tree/'debian/changelog'
 control=tree/'debian/control'
 control.write_text(control.read_text().replace('Description: Raspberry Pi OS theme and settings for the Calamares Installer',
-    'Description: ArclightOS theme and settings for the Calamares Installer'))
+    'Description: ArclightOS theme and settings for the Calamares Installer')
+    .replace('qml-module-qtquick-window2','qml6-module-qtquick-window')
+    .replace('qml-module-qtquick2','qml6-module-qtquick'))
+assert 'qml6-module-qtquick-window' in control.read_text() and 'qml-module-' not in control.read_text()
 changelog.write_text(f'''rpi-calamares-settings ({version}) unstable; urgency=medium
 
   * Rename installer identity, boot entry and source configuration to ArclightOS.
   * Retain offline installation and exact Live-package removal safeguards.
+  * Use Qt6 QML runtime modules matching the Calamares installation slideshow.
 
  -- YYDaniel <yydaniel@localhost>  Sat, 31 Oct 2026 00:00:00 +0800
 

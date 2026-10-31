@@ -1,3 +1,12 @@
+arclight-desktop (0.7.1) unstable; urgency=medium
+
+  * Record the active graphical session before suspend and recover it only
+    from the kernel's temporary sleep console after driver resume completes.
+  * Validate boot identity, session owner, leader lifetime and terminal;
+    preserve locks and manual terminal choices without hard-coding tty8.
+
+ -- YYDaniel <yydaniel@localhost>  Sat, 31 Oct 2026 08:15:00 +0800
+
 arclight-desktop (0.7.0) unstable; urgency=medium
 
   * Rename the system to ArclightOS and kernel to AscalonKernel.

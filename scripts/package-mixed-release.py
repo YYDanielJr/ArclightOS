@@ -19,6 +19,8 @@ removals=read(work/'mixed-build/installer-removal-simulation.json')
 assert removals['passed'] and removals['receipt_sha256']==sha(receipt) and not removals['unexpected_removals']
 assert read(stage/'rootfs-complete.json')['receipt_sha256']==sha(receipt)
 assert read(iso.with_suffix('.grub-inputs.json'))['iso_sha256']==digest
+nvidia=read(work/'mixed-build/nvidia-offline.json')
+assert nvidia['passed'] and nvidia['receipt_sha256']==sha(receipt) and nvidia['dpkg_status_unchanged']
 reports=[];sessions=set()
 for directory in a.test:
     directory=directory.resolve();assert directory.is_relative_to(work/'build')
@@ -44,13 +46,18 @@ source_files={Path(r['file']) for s in v['source_builds'] for r in s['source_inp
 driver=v['bundled_drivers'];source_files.add(Path(driver['open_module_source']['file']))
 sources=archive('arclight-image-sources.tar.xz',source_files)
 files=set()
-for base in [work/'mixed-build',*sessions]:
+rejected={p.parent for p in (work/'build').glob('*/rejected.json')}
+for base in [work/'mixed-build',*sessions,*rejected]:
     files.update(f for f in base.rglob('*') if f.is_file() and f.suffix in {'.json','.jsonl','.txt','.log','.png','.py','.sh'})
 files.update(f for f in (work/'mixed-build/apt-snapshot').rglob('*') if f.is_file())
 for name in ('rootfs-complete.json','package-reconciliation.json','offline-apt-cache.json','image-apt-marks.json','image-apt-marks.log','offline-apt-simulation.log','offline-root-install.log','base-vendor-inputs.json','image-packages.json'):
     files.add(stage/name)
 for name in ('branding-install-remove.json','branding-install-remove.log'):
     files.add(stage/name)
+for name in ('runtime-helper-addition.json','runtime-helper-addition.log','desktop-update.json','desktop-update.log','installer-update.json','installer-update.log','previous-rootfs-complete.json'):
+    if (stage/name).is_file():files.add(stage/name)
+files.update(stage.glob('previous-rootfs-complete-*.json'))
+files.update((work/'logs').glob('resume-vt-validation*.json'))
 files.update(stage.glob('offline-root-install.attempt-*.log'))
 if (stage/'factory-udev.log').exists():files.add(stage/'factory-udev.log')
 for s in v['source_builds']:files.update(Path(r['file']) for r in s['logs']+s['buildinfo'])
@@ -58,21 +65,28 @@ files.add(Path(driver['build_log']['file']));files.update(Path(r['file']) for r 
 files.add(Path(v['published_payload_recovery']['report']['file']))
 for name in ('desktop-final-elfs.json','desktop-validation.json','nvidia-module-validation.json','kernel-build-artifacts.json'):files.add(work/'logs'/name)
 files.add(work/'tools/packages.json')
-for name in ('session.json','agent-actions.jsonl'):
-    if (work/'build/bv'/name).is_file():files.add(work/'build/bv'/name)
-if (dist/'build-vm-evidence/assembly.log').is_file():files.add(dist/'build-vm-evidence/assembly.log')
+for appliance in ('bv','bv2'):
+    for name in ('session.json','agent-actions.jsonl','disk-check.log'):
+        if (work/'build'/appliance/name).is_file():files.add(work/'build'/appliance/name)
+files.update(dist.glob('build-vm-evidence*/assembly.log'))
 files.update(dist.glob('*.changes'))
 records=archive('arclight-mixed-build-records.tar.xz',files)
 shutil.copy2(receipt,dist/'arclight-image-inputs.json')
 shutil.copy2(work/'mixed-build/apt-authentication.json',dist/'arclight-apt-authentication.json')
-for src,dest in [('release-readme.md','arclight-release-readme.md'),('rebranding-20261031.md','arclight-rebranding.md')]:shutil.copy2(repo/'docs'/src,dist/dest)
+for src,dest in [('release-readme.md','arclight-release-readme.md'),('rebranding-20261031.md','arclight-rebranding.md')]:
+    text=(repo/'docs'/src).read_text().replace('(rebranding-20261031.md)','(arclight-rebranding.md)')
+    text=text.replace('[2026-10-29 历史发布](legacy-release-20261029.md)','工程源码中的 `docs/legacy-release-20261029.md`')
+    text=text.replace('[实体问题记录](hardware-validation/2026-10-30-tx-air-fa401km/resume-console-fix.md)',
+        '工程源码中的 `docs/hardware-validation/2026-10-30-tx-air-fa401km/resume-console-fix.md`')
+    (dist/dest).write_text(text)
 subprocess.run(['bash',str(repo/'scripts/export-source.sh')],check=True,env={**os.environ,'ARCLIGHT_WORK':str(work),'SOURCE_EXPORT_NAME':release['release_source_archive']})
 summary=dict(schema='arclight.release-validation.v1',release=release['id'],iso=iso.name,iso_bytes=iso.stat().st_size,iso_sha256=digest,archive_root=str(work),policy=v['policy'],
     runtime_packages=len(v['selected']),authenticated_apt_packages=auth['authenticated_binaries'],source_built_packages=sum(r['provenance']=='source-build' for r in v['selected']),
-    recovered_payload_packages=sum('artifact_recovery' in r for r in v['selected']),primary_kernel=primary,fallback_kernel=fallback,validation_complete=True,
+    recovered_payload_packages=sum('artifact_recovery' in r for r in v['selected']),fresh_source_built_packages=sum(r['provenance']=='source-build' and 'artifact_recovery' not in r for r in v['selected']),primary_kernel=primary,fallback_kernel=fallback,validation_complete=True,
     source_archive=release['source_archive'],release_source_archive=release['release_source_archive'],
     tests=[dict(phase=r['phase'],firmware=r['firmware'],kernel=r['kernel'],passed=True) for r in reports],
-    deferred=['Physical NVIDIA graphics, power, suspend and multiple monitors','Physical Secure Boot validation'])
+    deferred=['Physical NVIDIA graphics, power, suspend and multiple monitors','Physical Secure Boot validation',
+              'Physical retest of graphical VT recovery after lid-triggered suspend'])
 (dist/'arclight-release-validation.json').write_text(json.dumps(summary,indent=2)+'\n')
 names=[iso.name,iso.with_suffix('.grub-inputs.json').name,iso.with_suffix('.boot-layout.txt').name,'arclight-image-inputs.json','arclight-apt-authentication.json',
        'arclight-release-readme.md','arclight-rebranding.md',sources.name,records.name,'arclight-release-validation.json',release['source_archive'],release['release_source_archive'],

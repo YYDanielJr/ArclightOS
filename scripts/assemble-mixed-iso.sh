@@ -89,6 +89,7 @@ factory_udev_shadow=0
 cleanup() {
     if [[ -f $root/run/arclight-factory-udev.log ]]; then cp "$root/run/arclight-factory-udev.log" "$stage/factory-udev.log"; fi
     if [[ $factory_udev_shadow == 1 ]]; then rm -f "$root/usr/local/sbin/udevadm"; fi
+    rm -f "$root/.live-build"
     for target in run sys proc dev; do
         if mountpoint -q "$root/$target"; then umount -R "$root/$target"; fi
     done
@@ -114,6 +115,12 @@ if [[ -e $root/usr/local/sbin/udevadm ]]; then cmp "$repo/config/factory-udevadm
 factory_udev_shadow=1
 install -m 755 "$repo/config/factory-udevadm.sh" "$root/usr/local/sbin/udevadm"
 touch "$root/run/arclight-factory-assembly"
+# live-tools explicitly recognizes a root currently being built. The host of
+# this chroot may itself be a Live KVM appliance; do not let that suppress the
+# new kernel's initramfs. Remove this build-only marker before SquashFS.
+touch "$root/.live-build"
+chroot "$root" env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin sh -c \
+    'test "$(command -v udevadm)" = /usr/local/sbin/udevadm && udevadm control --reload-rules'
 mkdir -p "$root/etc/default/grub.d" "$root/etc/initramfs-tools/conf.d"
 printf 'GRUB_DISABLE_OS_PROBER=true\n' > "$root/etc/default/grub.d/80-arclight.cfg"
 printf 'RESUME=none\nMODULES=most\n' > "$root/etc/initramfs-tools/conf.d/arclight"
@@ -208,7 +215,10 @@ primary=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kerne
 for release in "${releases[@]}"; do
     test -f "$root/boot/vmlinuz-$release"
     grep -Eq '^CONFIG_HYPERV=[ym]$' "$root/boot/config-$release"
-    chroot "$root" update-initramfs -u -k "$release"
+    initrd_mode=-c
+    if [[ -s $root/boot/initrd.img-$release ]]; then initrd_mode=-u; fi
+    chroot "$root" update-initramfs "$initrd_mode" -k "$release"
+    test -s "$root/boot/initrd.img-$release"
     if grep -Eq '^CONFIG_(HYPERV|HYPERV_VMBUS)=m$' "$root/boot/config-$release"; then
         lsinitramfs "$root/boot/initrd.img-$release" | grep -F 'hv_vmbus.ko' > "$stage/initramfs-hyperv-$release.txt"
     fi
@@ -221,6 +231,7 @@ chroot "$root" apt-get clean
 cleanup
 trap - EXIT
 test ! -e "$root/usr/local/sbin/udevadm"
+test ! -e "$root/.live-build"
 python3 - "$root/usr/bin/udevadm" <<'PY'
 from pathlib import Path
 import sys

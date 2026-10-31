@@ -1,0 +1,12 @@
+[Unit]
+Description=Restore a graphical session left on the temporary sleep console
+After=systemd-suspend.service nvidia-resume.service systemd-logind.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/arclight-resume-session restore
+TimeoutStartSec=10
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=systemd-suspend.service

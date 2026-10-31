@@ -49,6 +49,14 @@ with tarfile.open(dist/summary['release_source_archive']) as tar:
 matrix=set();tests=0
 with tarfile.open(dist/'arclight-mixed-build-records.tar.xz') as tar:
     members=tar.getmembers();names={m.name for m in members}
+    nvidia=json.loads(tar.extractfile('mixed-build/nvidia-offline.json').read())
+    assert nvidia['passed'] and nvidia['receipt_sha256']==auth['receipt_sha256'] and nvidia['dpkg_status_unchanged']
+    assert set(nvidia['additional_packages'])=={r['package'] for r in receipt['bundled_drivers']['packages']}
+    modules=json.loads(tar.extractfile('logs/nvidia-module-validation.json').read())
+    assert modules['passed'] and {r['kernel'] for r in modules['results']}=={summary['primary_kernel'],summary['fallback_kernel']}
+    for result in modules['results']:
+        assert result['passed'] and len(result['modules'])==5
+        assert all(m['vermagic'].split()[0]==result['kernel'] for m in result['modules'])
     for source in receipt['source_builds']:
         for record in source['logs']+source['buildinfo']:
             with tar.extractfile(str(PurePosixPath(record['file']).relative_to(prefix))) as f:

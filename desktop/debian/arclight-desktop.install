@@ -2,6 +2,9 @@ arclight-settings usr/bin
 arclight-session usr/bin
 arclight-session usr/libexec
 arclight-system-policy usr/libexec
+arclight-resume-session usr/libexec
+share/arclight-sleep-session.service usr/lib/systemd/system
+share/arclight-resume-session.service usr/lib/systemd/system
 nlohmann-json-copyright usr/share/doc/arclight-desktop
 share/arclight-settings.desktop usr/share/applications
 share/arclight-session.desktop etc/xdg/autostart

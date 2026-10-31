@@ -1,0 +1,13 @@
+[Unit]
+Description=Record the active graphical session before sleep
+After=systemd-logind.service
+Before=systemd-suspend.service nvidia-suspend.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/libexec/arclight-resume-session prepare
+TimeoutStartSec=10
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=systemd-suspend.service

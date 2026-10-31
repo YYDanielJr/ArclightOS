@@ -54,9 +54,9 @@
     },
     "rpi-calamares-settings": {
       "original_version": "13.0.13+rpt3-1",
-      "version": "13.0.13+rpt3-2+arclight1",
+      "version": "13.0.13+rpt3-4+arclight1",
       "transform": "pi_offline_installer",
-      "recipe_revision": 3,
+      "recipe_revision": 4,
       "reason": "ArclightOS installer identity with offline installation and removal safeguards retained",
       "priority": 117
     },

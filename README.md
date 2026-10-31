@@ -13,7 +13,7 @@ AscalonKernel（阿斯卡纶内核）基于锁定的 Linux 上游源码，采用
 | 基础桌面 | Raspberry Pi Desktop amd64 Trixie；官方 ISO 固定 SHA256 |
 | AscalonKernel | Linux 7.3 + 移植的 BORE；release `7.3.0-ascalonkernel` |
 | 回退内核 | 本地源码构建的 Debian 6.12.113，独立保留 |
-| 原生桌面工具 | `arclight-desktop` 0.7.0；C++17 / GTK 3 |
+| 原生桌面工具 | `arclight-desktop` 0.7.1；C++17 / GTK 3 |
 | 设置 | 19 分类、45 视图，按页面应用，显示变更独立进程自动回退 |
 | 截图 | 窗口选区、区域截图、箭头、形状、文字和剪贴板 |
 | 压缩管理器 | GTK / libarchive；双进度、大小、压缩比、速度、时间、暂停和取消 |

@@ -5,7 +5,7 @@ CPPFLAGS += $(shell pkg-config --cflags wayland-client)  $(shell pkg-config --cf
 CXXFLAGS += -std=c++17 -Wall -Wextra -Wformat=2 -pthread
 LDLIBS += $(shell pkg-config --libs gtk+-3.0 libxml-2.0 gio-unix-2.0) -ldl -lcrypt -pthread
 COMMON = native/common.o native/display.o native/policy.o native/input.o native/upgrade.o
-PROGRAMS = arclight-settings arclight-session arclight-system-policy arclight-file-tools arclight-screenshot arclight-archive
+PROGRAMS = arclight-settings arclight-session arclight-system-policy arclight-file-tools arclight-screenshot arclight-archive arclight-resume-session
 .PHONY: all clean check
 all: $(PROGRAMS)
 arclight-settings: native/app.o native/page_apply.o native/layout.o native/pages_devices.o native/pages_system.o native/pages_bluetooth.o native/pages_input.o native/pages_upgrade.o $(COMMON)
@@ -36,7 +36,10 @@ native/archive.o native/archive_app.o native/archive_progress_view.o native/test
 native/archive_app.o native/archive_progress_view.o: native/archive_progress_view.hpp
 native/%.o: native/%.cpp native/common.hpp native/app.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
-check: native-tests
+arclight-resume-session: native/resume_session.o
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+check: native-tests arclight-resume-session
 	./native-tests
+	./arclight-resume-session --self-test
 clean:
 	rm -f native/*.o generated/*.o generated/*.c generated/*.h $(PROGRAMS) native-tests

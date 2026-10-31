@@ -23,6 +23,8 @@ if [ "$1" = configure ]; then
     migrate /etc/apt/sources.list.d/astgenne-backports.sources /etc/apt/sources.list.d/arclight-backports.sources
     migrate /etc/apt/sources.list.d/yydaniel-backports.sources /etc/apt/sources.list.d/arclight-backports.sources
 fi
+#DEBHELPER#
+
 if [ "$1" = configure ] && command -v systemctl >/dev/null; then
     systemctl daemon-reload || true
 fi

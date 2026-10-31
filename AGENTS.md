@@ -34,7 +34,7 @@
 
 SSH 凭据通过私有环境或用户指定的安全渠道提供，不写入本文、代码、日志和提交。`tools/vm.py` 是原构建机的可选传输助手，不是项目依赖；其默认主机名和账号不适用于所有新机器。IP 可能随 Hyper-V NAT 改变，核对主机身份和 SSH 主机密钥，不盲目信任新端点。
 
-## 3. 当前发布基线：已完成与未完成
+## 3. 历史发布基线与当前维护
 
 ### 2026-10-31 名称迁移
 
@@ -43,7 +43,7 @@ SSH 凭据通过私有环境或用户指定的安全渠道提供，不写入本�
 以下 Astgenne/Astesia 的版本、文件名和哈希是保留的历史证据，不能机械替换。原运行内核、旧冻结源码和旧镜像不能因品牌迁移被覆盖。新镜像的实际构建、启动、安装检查结果将单独记录。
 
 
-当前唯一保留的发行 ISO：`dist/astgenne-os-trixie-amd64.iso`，**3,325,241,344 字节**。
+2026-10-29 已验收旧版 ISO（继续保留）：`dist/astgenne-os-trixie-amd64.iso`，**3,325,241,344 字节**。
 
 ```text
 SHA256 b7fa35f4c73ce63265fcece1df72873fd52815eeb143ddb3444ed2deed97494b
@@ -100,6 +100,18 @@ Windows 已删除旧 ISO、旧全量重编译缓存/备份、构建中间产物�
 用户已注销并重新登录，确认 0.5.1 输入法修复生效。本机现已安装 **yydaniel-desktop 0.6.0**：设置操作按钮紧密横排并在窄窗口换行，只读信息采用两列；“关于本机”精简并显示实际设置/驱动版本。压缩器增加当前文件和总体两条进度条、实际大小/压缩比、速度、时间、暂停/继续、后台和完成摘要。7z 尚未写出的缓冲数据如实显示待写入，不猜测压缩率。详见 `docs/desktop-0.6.0.md`。
 
 产物 `dist/yydaniel-desktop_0.6.0_amd64.deb`，SHA256 `3866bf1b77e29fc2e64e8ef565697af5c123b10ebdcdfa9f1f818d0eb3741173`。71 项原生检查、11 项按页应用检查、19 分类/45 视图 × 三种缩放及 640px 窄窗口检查通过；最终 DEB 另行通过关键 GUI 和真实 96 MiB 压缩、暂停、取消验证。7 个安装 ELF 与已验证 DEB 一致。证据和独立清单为 `dist/astgenne-desktop-0.6.0-validation.json`、`dist/astgenne-desktop-0.6.0.sha256`，私有工作区为 `.local/desktop-0.6.0/`。旧 ISO 与发布清单不变，本次不作为完整硬件验收。
+
+## 2026-10-31 ArclightOS 发布与本机修复
+
+新镜像 `arclightos-trixie-amd64.iso` 为 **3,473,029,120 字节**，SHA256 `32854e813111d40cb8b425ce7b632e47ba1d91d1ff332cce67e9d642c6209c5e`。主内核为 `7.3.0-ascalonkernel`（`7.3-4+arclight1`），回退内核仍为 `6.12.113+deb13.1-amd64`；桌面包 `arclight-desktop 0.7.1`，安装器 `13.0.13+rpt3-4+arclight1`。旧名称的命令、配置与元包保留迁移兼容，不改写旧冻结版本或验收记录。
+
+本轮在实体 Linux 宿主使用 KVM 硬件加速、无网卡和独立新建虚拟盘，六项验证全部通过：主内核 BIOS/UEFI Live、两种正常可见的离线安装完成页及移除 ISO 后硬盘启动、回退内核 BIOS/UEFI Live。Live 包集合 1883：1852 个认证 APT 包、31 个源码构建包（20 个保留旧源码证据的载荷恢复，11 个重新构建）。安装后 1872 包，严格只删除 11 个 Live 包；每份安装后报告的 23 项检查通过。安装进度页的 Qt6 模块缺失已修复并实际查看。
+
+桌面最终 DEB 通过 75 项原生检查、17 项恢复策略检查、11 项按页应用检查，以及 19 分类/45 视图 × 三种缩放和窄窗口检查。五个 NVIDIA 开放模块分别针对主/回退内核从干净输入构建并核验 vermagic；离线依赖模拟仅添加三个驱动包。这不代表实体显卡加载、功耗、睡眠、多屏或 Secure Boot 已验收。
+
+本机已安装桌面 0.7.1 的睡眠临时控制台恢复保护，没有切换当前运行内核或主动挂起主机；真实再次合盖唤醒仍待用户复查。来宾已通过 9 项真实 VT 恢复检查。详见 `docs/hardware-validation/2026-10-30-tx-air-fa401km/resume-console-fix.md`。
+
+当前工作区为 `.local/arclight-20261030/`；冻结输入源码为 `arclightos-source-20261031-r8.tar.xz`，最终发布源码另存 `arclightos-source-20261031-release.tar.xz`，旧冻结归档不覆盖。新 Git 仓库独立放在相邻的 `ArclightOS/`，源码和文档可提交，`dist/` 为忽略的发布附件；没有设置或推送 GitHub 远端。发布范围与哈希以新的 `arclight-release.sha256`、`arclight-release-validation.json` 为准。
 
 ## 4. 修改入口与已修复问题
 
@@ -158,7 +170,7 @@ make mixed-local-base       # 仅需要的本地修改基础包与 GRUB
 
 12 GB 虚拟机先从 2–3 个编译任务起步，查看可用内存、交换和磁盘再调整。主机构建内存更大也不等于可并行运行多个重型构建和安装测试。每个阶段分别留日志，失败不能被管道中的 `tee` 吞掉退出码；使用 `set -o pipefail`。装配脚本要求工作区至少还有 35 GiB 可用空间，这不包含所有下载/编译的额外需求，不能把它当作全流程容量预算。
 
-**当前发布脚本仍有 20261029 和基线包计数/路径的固定值。** 新版本前检查 `Makefile`、`plan-mixed-image.py`、`package-mixed-release.py`、`tools/verify-release.py` 中的日期、源码文件名、内核期望值、包数和历史路径，作为一次有测试的版本迁移同步更新。不能直接运行旧 `make mixed-inputs` 覆盖冻结源码归档，不能为让新镜像通过而删掉实际验证。
+**Arclight 发布入口已改用 `config/release.json`；旧历史入口仍可能固定 20261029 和基线路径。** 新版本前检查 `Makefile`、`plan-mixed-image.py`、`package-mixed-release.py`、`tools/verify-release.py` 中的日期、源码文件名、内核期望值、包数和历史路径，作为一次有测试的版本迁移同步更新。不能直接运行旧 `make mixed-inputs` 覆盖冻结源码归档，不能为让新镜像通过而删掉实际验证。
 
 下一版应使用新的工作区、源码归档名、receipt 和 ISO 输出名。更新版本参数后，流程是：构建本地组件 → 导出该版源码 → `plan-mixed-image.py --fetch` → `verify-apt-snapshot.py` → `assemble-mixed-iso.sh` → 实际启动/离线安装验收 → `package-mixed-release.py` → `tools/verify-release.py`。装配从锁定官方 ISO 开始，在隔离网络/挂载环境中使用已冻结的输入，不复制构建机根文件系统。
 

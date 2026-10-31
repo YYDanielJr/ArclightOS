@@ -9,7 +9,7 @@
 | 系统 | ArclightOS / 弧光系统；`ID=arclight` | 冻结旧镜像和历史报告保留原文 |
 | 内核 | AscalonKernel / 阿斯卡纶内核 | 新 ABI `7.3.0-ascalonkernel`，不覆盖运行中的旧内核 |
 | 内核元包 | `ascalon-kernel` | `astesia-kernel`、`yydanielkernel` 为过渡包 |
-| 桌面包 | `arclight-desktop` 0.7.0 | `yydaniel-desktop` 为过渡包；旧命令为符号链接 |
+| 桌面包 | `arclight-desktop` 0.7.1 | `yydaniel-desktop` 为过渡包；旧命令为符号链接 |
 | 品牌包 | `arclight-branding` 0.2.0 | 转移原 Debian 文件 diversion 的所属包，保留原件 |
 | NVIDIA | `arclight-nvidia-*` | 与旧对应驱动包互斥；保留旧 PRIME 启动命令 |
 | 工作目录变量 | `ARCLIGHT_WORK` | 兼容 `YYDANIEL_WORK` |
@@ -25,7 +25,7 @@ Debian/Pi 的名称、许可证、源码版本号，以及未修改派生包的 
 3. 从旧完整安装镜像恢复 20 个未修改的本地构建组件。逐个检查 dpkg 校验值、文件字节、链接、权限和原源码构建证据。重新封装的 DEB 单独记录新哈希及恢复方法，不声称复现了旧 DEB。
 4. 从已保留且校验通过的对应内核源码解出干净树，以新 release 和包修订构建。BORE 不重复应用；源码、image、headers、配置和构建记录独立保留。
 5. 重新源码构建桌面、品牌、Live 配置、安装器和驱动包装。安装器使用新的名称、图标、欢迎页和引导入口，保留离线安装与严格卸载清单。
-6. 原 1845 个 APT 输入优先保持原版本；旧 Chromium 两个包已不在签名索引中，采用同源认证修订。补入新桌面必需的 `wl-clipboard`，共 1846 个认证 APT 包。全部 DEB 和签名索引重新核验。
+6. 原 1845 个 APT 输入优先保持原版本；旧 Chromium 两个包以及跨日更新后的 pipanel、tzdata 修订已不在当前签名索引中，采用同源认证修订。补入桌面必需的 `wl-clipboard`、驱动必需的 `nvidia-modprobe`，以及与现有 Qt 6.8.2 匹配的五个 QML 模块，共 1852 个认证 APT 包。全部 DEB 和签名索引重新核验。
 7. 从官方 ISO 解出新的根文件系统，在隔离网络/挂载环境安装完整输入清单。保留全体运行时包的手动安装标记，检查只卸载既定 11 个 Live 包。
 8. 生成独立的新 BIOS/UEFI 安装镜像，随后进行 KVM 启动、离线安装和硬盘启动验证。结果只以本轮报告为准。
 
@@ -42,4 +42,10 @@ Debian/Pi 的名称、许可证、源码版本号，以及未修改派生包的 
 - `scripts/assemble-mixed-iso.sh`：隔离断网装配，保留精确包集合和回滚保护。
 - `scripts/test-system-iso.py`：默认 KVM，保留实际来宾、桌面和安装证据。
 
-本轮各阶段的完成状态、产物大小和哈希将在最终验收记录中写入。旧 ISO、旧源码归档及旧发布清单不变。
+安装器实测发现上游依赖仍指定 Qt5，导致 Qt6 安装进度幻灯片空白。安装器修订为 `13.0.13+rpt3-4+arclight1`，显式依赖 Qt6 模块，并将完整依赖闭包加入离线输入。此前候选的安装完成页和失败原因单独保留，最终验收使用修正后的镜像。
+
+本轮各阶段的完成状态、产物大小和哈希以最终验收记录为准。旧 ISO、旧源码归档及旧发布清单不变。
+
+本轮另纳入了用户反馈的睡眠后文字控制台恢复保护；见 [实体问题记录](hardware-validation/2026-10-30-tx-air-fa401km/resume-console-fix.md)。本机已安装修复，实际再次合盖唤醒仍待验证。
+
+最终镜像已通过六项 KVM 启动/安装验证；Live 1883 包，安装后 1872 包。具体哈希和范围见发布说明与 `arclight-release-validation.json`。旧候选保留失败原因，不计入最终通过报告。

@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import shutil
+import stat
 import subprocess
 import sys
 from image_receipt import validate_mixed_receipt
@@ -76,6 +77,12 @@ def main():
         a.output.parent.mkdir(parents=True,exist_ok=True)
         mounts=[]
         try:
+            device_root=root/'dev'
+            assert not os.path.ismount(device_root)
+            subprocess.run(['mount','-t','tmpfs','-o','size=8M,mode=0755','tmpfs',str(device_root)],check=True)
+            mounts.append(device_root)
+            for name,minor in [('null',3),('zero',5),('random',8),('urandom',9)]:
+                os.mknod(device_root/name,stat.S_IFCHR|0o666,os.makedev(1,minor))
             for name,source,readonly in [('arclight-grub-tools',a.tools_root.resolve(),True),
                                          ('iso-input',a.tree,True),('iso-output',a.output.parent,False)]:
                 target=root/'run'/name;target.mkdir(parents=True,exist_ok=True)

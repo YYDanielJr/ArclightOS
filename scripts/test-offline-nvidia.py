@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Check bundled driver dependencies offline without installing/loading them."""
 import argparse
+import errno
 import hashlib
 import json
 import os
@@ -36,7 +37,11 @@ try:
     paths=[]
     for r in v['bundled_drivers']['packages']:
         source=Path(r['file']);assert sha(source)==r['sha256']
-        dest=stage/source.name;os.link(source,dest)
+        dest=stage/source.name
+        try:os.link(source,dest)
+        except OSError as error:
+            if error.errno!=errno.EXDEV:raise
+            shutil.copy2(source,dest)
         existing=set((root/'var/cache/apt/archives').glob('*.deb'))
         cached=cache_deb(root,dest);target=root/cached['file']
         if target not in existing:created.append(target)
