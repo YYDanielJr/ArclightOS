@@ -23,13 +23,13 @@ AscalonKernel（阿斯卡纶内核）基于锁定的 Linux 上游源码，采用
 
 ## 安装与发布文件
 
-完整镜像为 `arclightos-trixie-amd64.iso`，支持 BIOS / UEFI Live 与 Calamares 离线安装。下载后先按该版 `arclight-release.sha256` 检查哈希。实际验收范围见随版 `arclight-release-validation.json` 和 [发布说明](docs/release-readme.md)。旧镜像通过的项目不会自动计为新版通过。
+完整镜像为 `arclightos-trixie-amd64-20261031-0.8.0.iso`，支持 BIOS / UEFI Live 与 Calamares 离线安装。下载后先按该版 `arclight-release.sha256` 检查哈希。实际验收范围见随版 `arclight-release-validation.json` 和 [发布说明](docs/release-readme.md)。旧镜像通过的项目不会自动计为新版通过。
 
-桌面 0.8.0 是独立更新，详见 [高级压缩与实时统计](docs/desktop-0.8.0.md)。已验收的完整 ISO 仍包含桌面 0.7.1，其哈希和发布清单保持不变。
+当前完整 ISO 已整合桌面 0.8.0，支持独立 Live 与离线安装，见 [新镜像](docs/image-0.8.0.md)及[高级压缩与实时统计](docs/desktop-0.8.0.md)。0.7.1 的历史哈希与报告继续保留。
 
 ISO、DEB、对应源码归档和大型构建证据属于 Release 附件，不进入 Git 历史。运行系统中的普通用户、密钥、网络配置和缓存不会复制进镜像。
 
-使用 VS Code 发布源码与手动上传 Release，见 [发布步骤](docs/github.md)。本机源码仓库为 `ArclightOS/`，已验证的完整镜像和配套发布文件位于相邻的 `ArclightOS-release/20261031/`，与源码目录分开保留。镜像由维护者自行压缩上传。
+使用 VS Code 发布源码与手动上传 Release，见 [发布步骤](docs/github.md)。本机源码仓库为 `ArclightOS/`，已验证的完整镜像和配套发布文件位于相邻的 `ArclightOS-release/20261031-0.8.0/`，与源码目录分开保留。镜像由维护者自行压缩上传。
 
 ## 构建
 

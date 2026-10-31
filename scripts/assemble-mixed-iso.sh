@@ -1,6 +1,7 @@
 #!/bin/bash
 # APT distribution binaries plus recorded local source builds; offline assembly.
 set -euo pipefail
+umask 022
 export LC_ALL=C DEBIAN_FRONTEND=noninteractive
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 if [[ -n ${ARCLIGHT_TOOLS:-} ]]; then
@@ -277,6 +278,7 @@ for release in sorted(releases,key=lambda r:r!=primary):
 (iso/'.disk/arclight').write_text('ArclightOS - official APT packages and local source builds\n')
 (iso/'.disk/info').write_text('ArclightOS Trixie amd64\n')
 PY
+python3 "$repo/scripts/check-image-permissions.py" "$root" "$stage/image-permissions.json"
 mksquashfs "$root" "$iso/live/filesystem.squashfs" -comp zstd -Xcompression-level 15 -noappend -processors 3
 du -sx --block-size=1 "$root" | cut -f1 > "$iso/live/filesystem.size"
 (cd "$iso"; find . -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS)

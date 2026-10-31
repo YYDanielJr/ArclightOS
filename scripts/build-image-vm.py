@@ -10,12 +10,15 @@ import time
 
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('work',type=Path);p.add_argument('project',type=Path)
+p.add_argument('--agent-media',type=Path,help='Read-only native test-agent ISO inside this work build directory')
 p.add_argument('--resume',action='store_true',help='Reuse only the stopped, recorded factory disk without formatting it')
 a=p.parse_args();work=a.work.resolve();project=a.project.resolve()
 root=work/('build/bv2' if a.resume else 'build/bv');root.mkdir()
 assert os.access('/dev/kvm',os.R_OK|os.W_OK)
 tools=work/'tools/root';iso=work/'sources/2026-10-13-raspios-trixie-amd64.iso'
 with iso.open('rb') as f:assert hashlib.file_digest(f,'sha256').hexdigest()=='8a1aadebed97378b02385c1e2ac50d77984eed0d07bfb6cc10ac50d9e74b8135'
+agent=(a.agent_media or work/'build/agent-v6.iso').resolve(strict=True)
+assert agent.is_relative_to(work/'build') and agent.suffix=='.iso'
 disk=work/'build/bv/build.qcow2' if a.resume else root/'build.qcow2'
 if a.resume:
     previous=json.loads((work/'build/bv/session.json').read_text())
@@ -36,7 +39,7 @@ command=['qemu-system-x86_64','-machine','q35','-accel','kvm','-cpu','host','-m'
     '-drive','if=none,id=builddisk,format=qcow2,file='+str(disk),
     '-device','virtio-blk-pci,drive=builddisk,serial=ARCLIGHT_BUILD_DISK',
     '-cdrom',str(iso),'-boot','order=d,strict=on',
-    '-drive','if=none,id=agent,format=raw,media=cdrom,readonly=on,file='+str(work/'build/agent-v6.iso'),
+    '-drive','if=none,id=agent,format=raw,media=cdrom,readonly=on,file='+str(agent),
     '-device','virtio-scsi-pci,id=scsi','-device','scsi-cd,drive=agent,bus=scsi.0',
     '-virtfs','local,path='+str(work)+',mount_tag=inputs,security_model=none,readonly=on',
     '-virtfs','local,path='+str(project)+',mount_tag=project,security_model=none,readonly=on',

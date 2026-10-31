@@ -7,5 +7,8 @@ export LD_LIBRARY_PATH="$root/usr/lib/x86_64-linux-gnu${LD_LIBRARY_PATH:+:$LD_LI
 export LIBRARY_PATH="$root/usr/lib/x86_64-linux-gnu${LIBRARY_PATH:+:$LIBRARY_PATH}"
 export CPATH="$root/usr/include:$root/usr/include/x86_64-linux-gnu${CPATH:+:$CPATH}"
 export PKG_CONFIG_PATH="$root/usr/lib/x86_64-linux-gnu/pkgconfig${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+if [[ -d $root/usr/lib/x86_64-linux-gnu/qemu ]]; then
+    export QEMU_MODULE_DIR="$root/usr/lib/x86_64-linux-gnu/qemu"
+fi
 export BISON_PKGDATADIR="$root/usr/share/bison"
 exec "$@"

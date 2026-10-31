@@ -72,6 +72,17 @@ try:
     else:
         check('complete source receipt', receipt['complete'] and receipt['source_hashes_checked'] and not receipt['errors'])
     expected = {(r['package'], r['architecture']): r['version'] for r in receipt['selected']}
+    version = next(r['version'] for r in receipt['selected'] if r['package']=='arclight-desktop')
+    data['archive_version'] = run(['arclight-archive', '--version'])
+    check('archive version matches image receipt', data['archive_version']['exit_code']==0 and
+          data['archive_version']['output'].strip()=='Arclight Archive '+version+' (C++17 / GTK 3)')
+    archive_binary=Path('/usr/bin/arclight-archive')
+    check('archive application is a native ELF', archive_binary.read_bytes()[:4]==b'\x7fELF')
+    metadata=[Path('/usr/lib/modules')/data['kernel']/name for name in
+              ('modules.dep','modules.dep.bin','modules.alias','modules.alias.bin')]
+    data['module_metadata_permissions']=[dict(file=str(path),mode=oct(stat.S_IMODE(path.stat().st_mode))) for path in metadata]
+    check('module metadata readable by desktop users', all(path.is_file() and path.stat().st_mode&stat.S_IROTH for path in metadata))
+
     data['installed_packages'] = [dict(package=n, architecture=arch, version=v) for (n, arch), v in sorted(installed.items())]
     data['unexpected_packages_or_versions'] = [dict(package=n, architecture=arch, version=v, expected=expected.get((n, arch)))
         for (n, arch), v in installed.items() if expected.get((n, arch)) != v]

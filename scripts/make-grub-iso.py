@@ -18,6 +18,7 @@ def digest(path):
 
 
 def main():
+    os.umask(0o022)
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('build',type=Path)
     p.add_argument('tree',type=Path)

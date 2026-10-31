@@ -52,7 +52,10 @@ try:
     if a.action=='ping':print('Marked isolated guest agent: ready')
     elif a.action=='exec':
         assert a.arguments and a.arguments[0].startswith('/')
-        launch=rpc('guest-exec',dict(path=a.arguments[0],arg=a.arguments[1:],**{'capture-output':True}))
+        # qemu-ga deliberately uses umask 077 for its own private state.
+        # Child maintenance commands need the normal system mask; preserve
+        # arguments verbatim through positional parameters, never interpolation.
+        launch=rpc('guest-exec',dict(path='/bin/sh',arg=['-c','umask 022; exec \"$@\"','arclight-test-exec',*a.arguments],**{'capture-output':True}))
         deadline=time.monotonic()+120
         while True:
             result=rpc('guest-exec-status',dict(pid=launch['pid']))

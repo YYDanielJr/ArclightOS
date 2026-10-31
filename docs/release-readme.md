@@ -1,15 +1,19 @@
-# ArclightOS / AscalonKernel 2026-10-31
+# ArclightOS 0.8.0 / AscalonKernel — 2026-10-31
 
-完整安装镜像：`arclightos-trixie-amd64.iso`。采用 Raspberry Pi Desktop amd64 Trixie，保留 Pi Wayland 桌面；包含新的 AscalonKernel、独立回退内核和原生桌面工具 0.7.1。
+完整安装镜像：`arclightos-trixie-amd64-20261031-0.8.0.iso`，**3,327,051,776 字节**。SHA256：
 
-本版大小 **3,473,029,120 字节**，SHA256：`32854e813111d40cb8b425ce7b632e47ba1d91d1ff332cce67e9d642c6209c5e`。
+```text
+5f83a7269c16ef2d0975a257901a23a4c93eb0965bc3f58419ca65516264d855
+```
 
-请以本版 `arclight-release.sha256` 核验文件，以 `arclight-release-validation.json` 查看实际验收范围。本版六项 KVM 硬件加速验证全部通过：BIOS/UEFI 主内核 Live、离线安装后移除 ISO 的硬盘启动，以及两种固件下的回退内核 Live。两次离线安装均保留正常完成页和日志。
+本版包含原生桌面 `arclight-desktop 0.8.0`。弧光压缩器提供算法、线程、字典/模型、固实、加密、分卷、排除、完成前校验和编码器实时压缩比。保留 Raspberry Pi Desktop 的 labwc / Wayland 与 Pi 主题；主内核为 `7.3.0-ascalonkernel`，回退为 `6.12.113+deb13.1-amd64`。
 
-镜像支持 BIOS / UEFI Live 与 Calamares 离线安装。安装前备份数据，在安装器中确认明确的目标磁盘；安装后移除介质并检查硬盘启动。保留回退内核。Secure Boot、具体 NVIDIA 硬件、多屏和休眠仍需独立验收。
+本轮从锁定官方基础 ISO 干净装配，沿用已验证的 1883 个输入，只更新两个桌面包；其余 1881 个包的版本和哈希保持原样。1852 个认证 APT 包、31 个有源码构建证据的包；不把复用的包记为重新编译。策略为 `apt-native-custom-source`。
 
-完整发行同时包含工程源码、对应内核源码、本地派生源码、APT 签名/哈希记录及构建/验收归档。NVIDIA 开放模块与启动器由源码构建，闭源用户态/GSP 的来源单独记录。
+六个 KVM 硬件加速验收场景：BIOS / UEFI 主内核 Live、正常离线安装完成页及移除安装 ISO 后的硬盘启动、BIOS / UEFI 回退内核 Live。安装后包集合为 1872，仅移除规定 11 个 Live 包，两份安装后报告的 26 项检查通过。另验证真实 Live 中的 0.8.0 编码器、加密分卷和实时比例，以及 9 项真实 VT 恢复检查。23 项封装前权限检查通过。
 
-本轮命名和输入恢复见 [迁移说明](rebranding-20261031.md)。原 Astgenne OS 的固定哈希与验收范围见 [2026-10-29 历史发布](legacy-release-20261029.md)。
+以本版 `arclight-release.sha256` 核验完整发行，以 `arclight-release-validation.json` 查看实际范围。源码、许可证、对应内核/本地组件源码、签名/哈希和构建验收记录随发行保留。NVIDIA 615.78.08 为可选离线包；开放模块保留两个内核的原构建证明，本版重新模拟依赖只添加三个驱动包，不安装或加载驱动。闭源用户态及 GSP 固件如实标注。
 
-Live 包集合为 1883，安装后为 1872；来源为 1852 个认证 APT 包和 31 个本地源码构建包。设置 0.7.1 包含睡眠临时控制台恢复保护，本机已安装，实际再次合盖唤醒待复查。
+实体 NVIDIA、功耗、实际睡眠、多屏及 Secure Boot 验收范围没有扩大。完整发行说明见工程源码中的 `docs/image-0.8.0.md`；0.7.1 名称迁移是历史记录，见工程源码中的 `docs/rebranding-20261031.md`。
+
+安装前备份数据，在安装器内确认实际目标盘；安装后移除介质再检查硬盘启动，保留回退内核。此文件是完整可引导、可离线安装的 ISO。

@@ -18,6 +18,7 @@ assert auth['passed'] and auth['receipt_sha256']==sha(receipt)
 removals=read(work/'mixed-build/installer-removal-simulation.json')
 assert removals['passed'] and removals['receipt_sha256']==sha(receipt) and not removals['unexpected_removals']
 assert read(stage/'rootfs-complete.json')['receipt_sha256']==sha(receipt)
+if v.get('derivation'):assert read(stage/'image-permissions.json')['passed']
 assert read(iso.with_suffix('.grub-inputs.json'))['iso_sha256']==digest
 nvidia=read(work/'mixed-build/nvidia-offline.json')
 assert nvidia['passed'] and nvidia['receipt_sha256']==sha(receipt) and nvidia['dpkg_status_unchanged']
@@ -57,6 +58,7 @@ for name in ('branding-install-remove.json','branding-install-remove.log'):
 for name in ('runtime-helper-addition.json','runtime-helper-addition.log','desktop-update.json','desktop-update.log','installer-update.json','installer-update.log','previous-rootfs-complete.json'):
     if (stage/name).is_file():files.add(stage/name)
 files.update(stage.glob('previous-rootfs-complete-*.json'))
+if (stage/'image-permissions.json').exists():files.add(stage/'image-permissions.json')
 files.update((work/'logs').glob('resume-vt-validation*.json'))
 files.update(stage.glob('offline-root-install.attempt-*.log'))
 if (stage/'factory-udev.log').exists():files.add(stage/'factory-udev.log')
@@ -64,6 +66,12 @@ for s in v['source_builds']:files.update(Path(r['file']) for r in s['logs']+s['b
 files.add(Path(driver['build_log']['file']));files.update(Path(r['file']) for r in driver['kernel_build_logs'])
 files.add(Path(v['published_payload_recovery']['report']['file']))
 for name in ('desktop-final-elfs.json','desktop-validation.json','nvidia-module-validation.json','kernel-build-artifacts.json'):files.add(work/'logs'/name)
+files.update((work/'logs').glob('archive-guest-validation*.json'))
+if (work/'logs/factory-recipe.json').exists():files.add(work/'logs/factory-recipe.json')
+for name in ('old-image-cleanup.json','acceptance-matrix.json'):
+    if (work/'logs'/name).exists():files.add(work/'logs'/name)
+files.update(p for p in (work/'logs/archive-gui-validation').rglob('*') if p.is_file() and p.suffix in {'.png','.json','.log'})
+files.update((work/'logs').glob('prepare-inputs*.log'))
 files.add(work/'tools/packages.json')
 for appliance in ('bv','bv2'):
     for name in ('session.json','agent-actions.jsonl','disk-check.log'):
@@ -82,7 +90,9 @@ for src,dest in [('release-readme.md','arclight-release-readme.md'),('rebranding
 subprocess.run(['bash',str(repo/'scripts/export-source.sh')],check=True,env={**os.environ,'ARCLIGHT_WORK':str(work),'SOURCE_EXPORT_NAME':release['release_source_archive']})
 summary=dict(schema='arclight.release-validation.v1',release=release['id'],iso=iso.name,iso_bytes=iso.stat().st_size,iso_sha256=digest,archive_root=str(work),policy=v['policy'],
     runtime_packages=len(v['selected']),authenticated_apt_packages=auth['authenticated_binaries'],source_built_packages=sum(r['provenance']=='source-build' for r in v['selected']),
-    recovered_payload_packages=sum('artifact_recovery' in r for r in v['selected']),fresh_source_built_packages=sum(r['provenance']=='source-build' and 'artifact_recovery' not in r for r in v['selected']),primary_kernel=primary,fallback_kernel=fallback,validation_complete=True,
+    recovered_payload_packages=sum('artifact_recovery' in r for r in v['selected']),fresh_source_built_packages=(len(v['derivation']['changed_packages']) if v.get('derivation') else sum(r['provenance']=='source-build' and 'artifact_recovery' not in r for r in v['selected'])),
+    reused_source_built_packages=(sum(r['provenance']=='source-build' for r in v['selected'])-len(v['derivation']['changed_packages']) if v.get('derivation') else 0),
+    derivation=v.get('derivation'),primary_kernel=primary,fallback_kernel=fallback,validation_complete=True,
     source_archive=release['source_archive'],release_source_archive=release['release_source_archive'],
     tests=[dict(phase=r['phase'],firmware=r['firmware'],kernel=r['kernel'],passed=True) for r in reports],
     deferred=['Physical NVIDIA graphics, power, suspend and multiple monitors','Physical Secure Boot validation',

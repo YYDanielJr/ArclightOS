@@ -3,13 +3,14 @@
 import argparse
 import datetime as dt
 import json
+import os
 from pathlib import Path
 import socket
 import time
 
 p = argparse.ArgumentParser(description=__doc__)
 p.add_argument('session', type=Path)
-p.add_argument('action', choices=['status', 'screenshot', 'key', 'type', 'mouse', 'point', 'reset', 'pause', 'resume'])
+p.add_argument('action', choices=['status', 'screenshot', 'key', 'type', 'type-file', 'mouse', 'point', 'reset', 'pause', 'resume'])
 p.add_argument('value', nargs='?', help='Qcodes separated by +, ASCII text, or absolute x,y in 0..32767')
 a = p.parse_args()
 root = a.session.resolve(strict=True)
@@ -47,6 +48,7 @@ try:
         qmp('system_reset')
         qmp('cont')
     elif a.action == 'screenshot':
+        time.sleep(.5)  # Allow compositor frames after the preceding input event.
         filename = root / ('screen-' + stamp + '.png')
         qmp('screendump', dict(filename=str(filename), format='png'))
         print(filename)
@@ -66,7 +68,13 @@ try:
         qmp('send-key', dict(keys=[dict(type='qcode', data=k) for k in (a.value or '').split('+')], **{'hold-time': 80}))
         time.sleep(.3)
     else:
-        text = a.value or ''
+        if a.action == 'type-file':
+            secret=Path(a.value).resolve(strict=True)
+            assert secret.is_relative_to(root.parent.parent/'secrets') and secret.is_file() and not secret.is_symlink()
+            assert secret.stat().st_uid==os.getuid() and secret.stat().st_mode&0o077==0 and secret.stat().st_size<=4096
+            text=secret.read_text().rstrip('\n')
+        else:
+            text = a.value or ''
         plain = dict(zip(' -_=+[]{};:\'",.<>/?`~\\|!@#$%^&*()',
                          ['spc', 'minus', 'minus', 'equal', 'equal', 'bracket_left', 'bracket_right',
                           'bracket_left', 'bracket_right', 'semicolon', 'semicolon', 'apostrophe',
@@ -84,7 +92,7 @@ try:
         time.sleep(.4)
     with (root / 'inspection-actions.jsonl').open('a') as handle:
         # Do not persist typed text: the installer may receive a disposable test password.
-        handle.write(json.dumps(dict(time=stamp, action=a.action, characters=len(a.value or ''))) + '\n')
+        handle.write(json.dumps(dict(time=stamp, action=a.action, characters=len(text) if a.action in ('type','type-file') else len(a.value or ''))) + '\n')
 finally:
     stream.close()
     client.close()

@@ -44,3 +44,7 @@ github-assets/
 /desktop/arclight-*
 
 /desktop/archive-tests
+*.7z
+*.7z.[0-9]*
+*.rar
+*.part[0-9]*.rar
