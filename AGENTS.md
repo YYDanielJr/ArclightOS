@@ -113,6 +113,14 @@ Windows 已删除旧 ISO、旧全量重编译缓存/备份、构建中间产物�
 
 当前工作区为 `.local/arclight-20261030/`；冻结输入源码为 `arclightos-source-20261031-r8.tar.xz`，最终发布源码另存 `arclightos-source-20261031-release.tar.xz`，旧冻结归档不覆盖。新 Git 仓库独立放在相邻的 `ArclightOS/`，源码和文档可提交，`dist/` 为忽略的发布附件；没有设置或推送 GitHub 远端。发布范围与哈希以新的 `arclight-release.sha256`、`arclight-release-validation.json` 为准。
 
+### 2026-10-31 本机原地升级
+
+用户随后授权原地补齐。本机现为 **ArclightOS 13 / arclight-desktop 0.7.1**，已安装 AscalonKernel `7.3.0-ascalonkernel`、headers 和新名称 NVIDIA 615.78.08 栈；18 个包补齐/升级、3 个旧驱动包备份后移除，7 个较新版本保留。完整事务、APT/dpkg、程序文件和三内核共 15 个 NVIDIA 模块版本/vermagic 检查通过，GUI 会话未重启。
+
+**当前正在运行的内核仍为 `7.3.0-yydanielkernel`。** 新内核尚未在实体机引导。下一次启动此系统已安排一次 AscalonKernel 试启动；`/etc/default/grub.d/90-arclight-kernel-trial.cfg` 暂保留旧内核为永久默认，实体启动/图形/NVIDIA 验证后才调整。不要因本文提到待重启就自动重启机器。新旧内核和 `/var/backups/arclight-inplace-20261031/` 回退备份均保留。
+
+UEFI 已新增 ArclightOS 入口，旧入口与原有相对顺序保留，Windows 优先级未提高或降低；EFI 文件未替换。Secure Boot 当前关闭。原有 NVIDIA EC 背光服务失败仍在，没有新增失败服务。真实新内核启动和再次睡眠仍待测。脱敏记录见 `docs/hardware-validation/2026-10-30-tx-air-fa401km/inplace-upgrade-20261031.md`；原始日志在忽略的 `.local/hardware-validation/2026-10-31-arclight-inplace/`。本次只更新实体安装，不覆盖已验收 ISO、冻结源码或其发布清单。
+
 ## 4. 修改入口与已修复问题
 
 | 范围 | 首选入口 |

@@ -1,0 +1,172 @@
+{
+  "date": "2026-10-31",
+  "machine": "TX AIR FA401KM / Ryzen AI 7 H 350 / RTX 5060 Laptop",
+  "scope": "in-place package migration; no reboot or suspend performed",
+  "passed": true,
+  "os": "ArclightOS 13 (trixie)",
+  "desktop": "0.7.1",
+  "installed_kernel": "7.3.0-ascalonkernel",
+  "running_kernel": "7.3.0-yydanielkernel",
+  "packages_installed_or_upgraded": 18,
+  "legacy_driver_packages_purged": [
+    "yydaniel-nvidia-driver",
+    "yydaniel-nvidia-open-dkms",
+    "yydaniel-nvidia-userspace"
+  ],
+  "newer_versions_preserved": [
+    {
+      "package": "imagemagick-7-common",
+      "installed": "8:7.1.1.43+dfsg1-1+deb13u13",
+      "image": "8:7.1.1.43+dfsg1-1+deb13u12",
+      "reason": "Keep newer installed package"
+    },
+    {
+      "package": "libmagickcore-7.q16-10",
+      "installed": "8:7.1.1.43+dfsg1-1+deb13u13",
+      "image": "8:7.1.1.43+dfsg1-1+deb13u12",
+      "reason": "Keep newer installed package"
+    },
+    {
+      "package": "libmagickcore-7.q16-10-extra",
+      "installed": "8:7.1.1.43+dfsg1-1+deb13u13",
+      "image": "8:7.1.1.43+dfsg1-1+deb13u12",
+      "reason": "Keep newer installed package"
+    },
+    {
+      "package": "libmagickwand-7.q16-10",
+      "installed": "8:7.1.1.43+dfsg1-1+deb13u13",
+      "image": "8:7.1.1.43+dfsg1-1+deb13u12",
+      "reason": "Keep newer installed package"
+    },
+    {
+      "package": "gtk2-engines-pixflat",
+      "installed": "0.5+b1",
+      "image": "0.5+astgenne1",
+      "reason": "Keep newer installed package"
+    },
+    {
+      "package": "linux-libc-dev",
+      "installed": "7.2.11-1~bpo13+1",
+      "image": "6.12.113-1+astgenne1",
+      "reason": "Keep newer installed package"
+    },
+    {
+      "package": "linux-headers-amd64",
+      "installed": "7.2.11-1~bpo13+1",
+      "image": "6.12.113-1+astgenne1",
+      "reason": "Keep newer installed package"
+    }
+  ],
+  "package_set_exactly_matches_plan": true,
+  "dpkg_audit_empty": true,
+  "apt_dependency_check": true,
+  "modules": [
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia",
+      "sha256": "a5693914458f86ca73b732c1771e9c8320c0090ebcd291d25f457c361ea0f84a",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia_modeset",
+      "sha256": "3201b53e14d2d4e48cdd1be9d3b59e65487b89788fbaabcaedcfd0ae52a43087",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia_drm",
+      "sha256": "db0932d7dfce80f5d3d914eaed70e27a14c5617afb79fb9f508e1657da5e7c20",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia_uvm",
+      "sha256": "94d8ba6be9f14e047fabdd9d0acdad84bf3edf5d0a7b1d34380c133c5187d096",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia_peermem",
+      "sha256": "929106b83ca8a18c093e3dd96d77da3ca36369beabb210925d71cf231e31f96d",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-yydanielkernel",
+      "name": "nvidia",
+      "sha256": "5850d27e1cf9ea1b4b700e04e236a3dc623bb2551a8f8169b71359b10eb4b889",
+      "vermagic": "7.3.0-yydanielkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-yydanielkernel",
+      "name": "nvidia_modeset",
+      "sha256": "cc06f938de77220740c30d3ceecbf80b05471be610d0c02226a1bce0b335ff9e",
+      "vermagic": "7.3.0-yydanielkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-yydanielkernel",
+      "name": "nvidia_drm",
+      "sha256": "e720b1cf2c2f10f16afe5796d49d60f6b5c95b0fbde427fae8112a9bf62d8d0b",
+      "vermagic": "7.3.0-yydanielkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-yydanielkernel",
+      "name": "nvidia_uvm",
+      "sha256": "e43d8dc35c3afa19bb28fe4f2e87df2e93a9b66b4e389a820b5a91fcfc161b78",
+      "vermagic": "7.3.0-yydanielkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-yydanielkernel",
+      "name": "nvidia_peermem",
+      "sha256": "6086317df449a3723f8faaad4899960f4448fa267ed96c45d6759928722f42d9",
+      "vermagic": "7.3.0-yydanielkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia",
+      "sha256": "c80d3a4147d39b7277bb67442818b610e16f55dd43b34a45c501c9363c0a9014",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia_modeset",
+      "sha256": "72300d030561dbb6ca42ec9ec05782f4171d968422c9419caac4d39935c932df",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia_drm",
+      "sha256": "20dcc8f1e382d0e30d27ca65f1d913deee527e534f2eaa760839468382ecd64f",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia_uvm",
+      "sha256": "4fb77239ffffcff1ab6311c06bc8f6ef65b4f3476bf3ccaddfb0246b3187d3c7",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia_peermem",
+      "sha256": "42c281f60cb5d7c8cbe142883ce71a47bdba902c7253683d2c4d6940296d000b",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    }
+  ],
+  "gpu_nvml_driver": "615.78.08",
+  "graphical_session_preserved": true,
+  "generated_module_indices_reproducible": true,
+  "efi_executable_files_unchanged": true,
+  "old_uefi_entries_retained": true,
+  "original_uefi_order_preserved": true,
+  "new_uefi_entry": "ArclightOS (same existing EFI executable)",
+  "next_os_boot": "one-time AscalonKernel trial",
+  "permanent_kernel_default": "7.3.0-yydanielkernel",
+  "secure_boot_enabled": false,
+  "preexisting_failed_service": "systemd-backlight@backlight:nvidia_wmi_ec_backlight.service",
+  "new_failed_services": false,
+  "deferred": [
+    "Physical boot of 7.3.0-ascalonkernel",
+    "NVIDIA module loading under the new ABI",
+    "Physical suspend/resume retest"
+  ]
+}
