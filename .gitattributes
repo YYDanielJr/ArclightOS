@@ -12,5 +12,9 @@ Makefile text eol=lf
 live/config/* text eol=lf
 *.deb binary
 *.iso binary
+*.iso.part* binary
+*.zip binary
+*.zip.[0-9]* binary
+*.z[0-9][0-9] binary
 *.tar.* binary
 *.png binary

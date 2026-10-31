@@ -1,0 +1,84 @@
+{
+  "date": "2026-10-31",
+  "scope": "Physical post-upgrade boot and retirement of the authorized old ABI",
+  "passed": true,
+  "running_kernel": "7.3.0-ascalonkernel",
+  "old_kernel": "7.3.0-yydanielkernel",
+  "fallback_kernel": "6.12.113+deb13.1-amd64",
+  "removed_packages": [
+    "linux-image-7.3.0-yydanielkernel",
+    "linux-headers-7.3.0-yydanielkernel"
+  ],
+  "permanent_default": "7.3.0-ascalonkernel",
+  "fallback_retained": true,
+  "amd_opengl_renderer": "AMD Radeon 860M Graphics / Mesa 25.0.7",
+  "nvidia_prime_opengl_renderer": "NVIDIA GeForce RTX 5060 Laptop GPU / NVIDIA 615.78.08",
+  "gpu_nvml_driver": "615.78.08",
+  "gui_session_preserved": true,
+  "kernel_fatal_warnings": false,
+  "modules": [
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia_modeset",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia_drm",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia_uvm",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "7.3.0-ascalonkernel",
+      "name": "nvidia_peermem",
+      "vermagic": "7.3.0-ascalonkernel SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia_modeset",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia_drm",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia_uvm",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    },
+    {
+      "kernel": "6.12.113+deb13.1-amd64",
+      "name": "nvidia_peermem",
+      "vermagic": "6.12.113+deb13.1-amd64 SMP preempt mod_unload modversions"
+    }
+  ],
+  "module_metadata_readable_by_normal_user": true,
+  "package_inventory_matches_plan": true,
+  "dpkg_audit_empty": true,
+  "apt_dependency_check": true,
+  "secure_boot_enabled": false,
+  "preexisting_failed_service": "systemd-backlight@backlight:nvidia_wmi_ec_backlight.service",
+  "deferred": [
+    "Physical fallback-kernel boot",
+    "EGL/Vulkan rendering acceptance",
+    "Multiple displays and power measurements",
+    "Three suspend/resume cycles",
+    "Secure Boot"
+  ]
+}

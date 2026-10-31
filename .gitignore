@@ -13,6 +13,11 @@ __pycache__/
 !config/base-source-plan.json.xz
 !config/boot-source-plan.json.xz
 *.iso
+*.iso.part*
+*.zip
+*.zip.[0-9]*
+*.z[0-9][0-9]
+github-assets/
 *.img
 *.key
 *.pem
