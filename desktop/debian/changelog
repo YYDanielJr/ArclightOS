@@ -1,3 +1,14 @@
+arclight-desktop (0.8.0) unstable; urgency=medium
+
+  * Use the native 7-Zip engine for real encoder input/output progress,
+    advanced algorithms, dictionary, threads, solid archives and encryption.
+  * Add safe multi-volume output, exclusion rules, optional verification,
+    persistent non-secret options and compatible multi-volume extraction.
+  * Test codec and volume interoperability, live ratios, cancellation,
+    passwords, source changes and archive path protection.
+
+ -- YYDaniel <yydaniel@localhost>  Sat, 31 Oct 2026 11:10:00 +0800
+
 arclight-desktop (0.7.1) unstable; urgency=medium
 
   * Record the active graphical session before suspend and recover it only

@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v7
       - run: >-
           apt-get update && apt-get install -y --no-install-recommends
-          build-essential debhelper devscripts python3 rsync pkg-config
+          build-essential debhelper devscripts python3 rsync pkg-config 7zip
           libgtk-3-dev libxml2-dev libarchive-dev libwayland-dev libx11-dev
           wayland-protocols libcrypt-dev nlohmann-json3-dev
       - run: bash scripts/build-desktop.sh

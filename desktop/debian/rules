@@ -15,6 +15,10 @@ override_dh_auto_build:
 override_dh_auto_test:
 	$(MAKE) check
 
+override_dh_fixperms:
+	dh_fixperms
+	chmod 755 debian/arclight-desktop/usr/lib/systemd/system-sleep/50-arclight-kanshi-resume
+
 override_dh_installsystemd:
 	dh_installsystemd --no-start
 

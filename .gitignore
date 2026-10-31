@@ -42,3 +42,5 @@ github-assets/
 *.vhdx
 *.avhdx
 /desktop/arclight-*
+
+/desktop/archive-tests

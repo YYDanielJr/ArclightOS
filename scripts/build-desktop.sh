@@ -23,6 +23,17 @@ if [[ -n ${ARCLIGHT_TOOLS:-} ]]; then
 fi
 dpkg-buildpackage -us -uc "${flags[@]}"
 test "$(./arclight-settings --version)" = "ArclightOS Settings $version (C++17 / GTK 3)"
+# Reject payloads that would silently disable sleep recovery after an upgrade.
+python3 - "../arclight-desktop_${version}_amd64.deb" <<'PY_CHECK'
+import io, subprocess, sys, tarfile
+raw = subprocess.check_output(['dpkg-deb', '--fsys-tarfile', sys.argv[1]])
+with tarfile.open(fileobj=io.BytesIO(raw)) as archive:
+    files = {entry.name.removeprefix('./'): entry for entry in archive.getmembers()}
+    required = ['usr/lib/systemd/system-sleep/50-arclight-kanshi-resume',
+                'usr/libexec/arclight-resume-session', 'usr/bin/arclight-archive']
+    for name in required:
+        assert files[name].isfile() and files[name].mode & 0o111, 'Missing executable payload: ' + name
+PY_CHECK
 cp -a ../arclight-desktop_"$version"* ../yydaniel-desktop_"$version"* "$work/dist/"
 for debug in ../arclight-desktop-dbgsym_"$version"_*.deb; do
     [[ ! -f $debug ]] || cp -a "$debug" "$work/dist/"

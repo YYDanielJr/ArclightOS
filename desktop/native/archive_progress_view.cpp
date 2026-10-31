@@ -32,7 +32,7 @@ void ArchiveProgressView::create(GtkWindow *parent,std::function<void()> toggle_
       ".archive-task progressbar trough, .archive-task progressbar progress {min-height:14px;}",-1,nullptr);
   gtk_style_context_add_provider_for_screen(gtk_widget_get_screen(window),GTK_STYLE_PROVIDER(css),GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
   g_object_unref(css);gtk_window_set_title(GTK_WINDOW(window),"压缩任务");
-  gtk_window_set_default_size(GTK_WINDOW(window),660,460);gtk_window_set_transient_for(GTK_WINDOW(window),parent);
+  gtk_window_set_default_size(GTK_WINDOW(window),700,510);gtk_window_set_transient_for(GTK_WINDOW(window),parent);
   gtk_window_set_destroy_with_parent(GTK_WINDOW(window),TRUE);
   auto box=gtk_box_new(GTK_ORIENTATION_VERTICAL,10);gtk_container_set_border_width(GTK_CONTAINER(box),16);gtk_container_add(GTK_CONTAINER(window),box);
   auto label=[](const char *s){auto w=gtk_label_new(s);gtk_label_set_xalign(GTK_LABEL(w),0);return w;};
@@ -48,7 +48,7 @@ void ArchiveProgressView::create(GtkWindow *parent,std::function<void()> toggle_
   auto grid=gtk_grid_new();gtk_grid_set_column_spacing(GTK_GRID(grid),12);gtk_grid_set_row_spacing(GTK_GRID(grid),8);
   unsigned i=0;
   for(auto [key,title]:std::vector<std::pair<const char *,const char *>>{{"total","原始总大小"},{"processed","已处理原始数据"},
-      {"output","压缩后大小"},{"ratio","压缩比"},{"files","文件"},{"speed","处理速度"},{"elapsed","已用时间"},{"remaining","预计剩余"}}){
+      {"output","压缩后大小"},{"ratio","压缩比"},{"files","文件"},{"speed","处理速度"},{"elapsed","已用时间"},{"remaining","预计剩余"},{"written","已写出大小"},{"volumes","卷数 / 算法"}}){
     auto name=label(title),value=label("—");gtk_style_context_add_class(gtk_widget_get_style_context(name),"dim-label");
     gtk_label_set_selectable(GTK_LABEL(value),TRUE);gtk_widget_set_hexpand(value,TRUE);
     gtk_label_set_ellipsize(GTK_LABEL(value),PANGO_ELLIPSIZE_END);gtk_label_set_width_chars(GTK_LABEL(value),15);
@@ -56,7 +56,7 @@ void ArchiveProgressView::create(GtkWindow *parent,std::function<void()> toggle_
     values[key]=value;++i;
   }
   gtk_box_pack_start(GTK_BOX(box),grid,FALSE,FALSE,4);
-  auto note=label("压缩比 = 压缩后大小 ÷ 已处理原始数据；缓冲中的数据在写出后更新。");
+  auto note=label("实时压缩比 = 编码器输出 ÷ 编码器已处理输入；完成后包含归档头部和索引。");
   gtk_label_set_line_wrap(GTK_LABEL(note),TRUE);gtk_label_set_max_width_chars(GTK_LABEL(note),62);
   gtk_style_context_add_class(gtk_widget_get_style_context(note),"dim-label");gtk_box_pack_start(GTK_BOX(box),note,FALSE,FALSE,0);
   auto buttons=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8);gtk_widget_set_halign(buttons,GTK_ALIGN_END);
@@ -75,7 +75,7 @@ void ArchiveProgressView::show(const std::string &destination) {
 void ArchiveProgressView::update(const ArchiveProgress &p,double seconds,bool paused,bool active,const std::string &error) {
   auto v=archive_progress_values(p,seconds);
   std::string verb=p.operation=="create"?"压缩":p.operation=="extract"?"解压":"完整性检查";
-  std::string phase=p.phase=="scan"?"正在统计文件":p.phase=="finalize"?"正在封装并保存":verb+"中";
+  std::string phase=p.phase=="scan"?"正在统计文件":p.phase=="finalize"?"正在封装并保存":p.phase=="verify"?"正在测试压缩包":verb+"中";
   if(paused)phase="已暂停";
   if(p.complete)phase=verb+"完成";
   if(!error.empty())phase=error;
@@ -93,9 +93,11 @@ void ArchiveProgressView::update(const ArchiveProgress &p,double seconds,bool pa
   else{gtk_progress_bar_pulse(GTK_PROGRESS_BAR(current));gtk_progress_bar_set_text(GTK_PROGRESS_BAR(current),p.phase=="scan"?"正在统计…":"正在处理…");}
   auto set=[&](const char *key,std::string text){gtk_label_set_text(GTK_LABEL(values.at(key)),text.c_str());};
   set("total",p.total_known?archive_size(p.total_bytes):"正在统计 / 未知");set("processed",archive_size(p.processed_bytes));
-  set("output",p.operation=="create"?(p.output_known?archive_size(p.output_bytes):"等待封装写入"):"—");
+  set("output",p.operation=="create"?(p.output_known?archive_size(p.output_bytes):"等待编码器统计"):"—");
   char ratio[32];snprintf(ratio,sizeof ratio,"%.1f%%",v["ratio"].is_null()?0:v["ratio"].get<double>());
   set("ratio",v["ratio"].is_null()?"—":ratio);
+  set("written",p.operation=="create"?archive_size(p.written_bytes):"—");
+  set("volumes",p.operation=="create"?std::to_string(p.volumes)+" / "+p.method+" · "+std::to_string(p.threads)+" 线程":"—");
   set("files",std::to_string(p.files_done)+" / "+std::to_string(p.files_total)+(p.files_skipped?" · 跳过 "+std::to_string(p.files_skipped):""));
   set("speed",p.processed_bytes?archive_size(uint64_t(v["speed"].get<double>()))+"/s":"—");
   set("elapsed",duration(seconds));set("remaining",p.complete?"00:00:00":p.phase=="finalize"?"正在完成写入":v["remaining"].is_null()?"正在估算…":duration(std::ceil(v["remaining"].get<double>())));

@@ -46,3 +46,16 @@ License: protocol-notices
  These bindings are generated from system wayland-protocols XML descriptions.
  The full protocol copyright and permission notices are installed in
  /usr/share/doc/arclight-desktop/wayland-protocols-copyright.gz.
+
+Files: vendor/7zip/CPP/*
+Copyright: 1999-2025 Igor Pavlov
+License: LGPL-2.1+
+ These unmodified interface headers come from 7-Zip 25.01. The complete
+ license and upstream notices are retained in vendor/7zip/License.txt and
+ vendor/7zip/Debian-copyright, and installed in the 7zip documentation
+ subdirectory. On Debian the LGPL is in /usr/share/common-licenses/LGPL-2.1.
+
+Files: vendor/7zip/C/*
+Copyright: Igor Pavlov
+License: public-domain
+ These files are explicitly placed in the public domain by the author.

@@ -28,18 +28,25 @@ generated/%.o: generated/%.c
 native/screenshot_windows.o: $(addprefix generated/,$(addsuffix .h,$(PROTOCOLS)))
 arclight-screenshot: native/screenshot.o native/screenshot_windows.o $(PROTOCOL_OBJECTS) $(COMMON)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lwayland-client -lX11
-arclight-archive: native/archive_app.o native/archive_progress_view.o native/archive.o $(COMMON)
+arclight-archive: native/archive_app.o native/archive_progress_view.o native/archive_create_view.o native/archive.o native/archive_io.o native/archive_sdk.o $(COMMON)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -larchive
-native-tests: native/tests.o native/archive.o $(COMMON)
+native-tests: native/tests.o native/archive.o native/archive_io.o native/archive_sdk.o $(COMMON)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -larchive
-native/archive.o native/archive_app.o native/archive_progress_view.o native/tests.o: native/archive.hpp
+archive-tests: native/archive_advanced_tests.o native/archive.o native/archive_io.o native/archive_sdk.o $(COMMON)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -larchive
+native/archive.o native/archive_app.o native/archive_progress_view.o native/archive_create_view.o native/archive_io.o native/archive_sdk.o native/archive_advanced_tests.o native/tests.o: native/archive.hpp
+native/archive_io.o native/archive_sdk.o native/archive_advanced_tests.o: native/archive_io.hpp
+native/archive_app.o native/archive_create_view.o: native/archive_create_view.hpp
+native/archive_sdk.o: $(shell find vendor/7zip -name '*.h')
 native/archive_app.o native/archive_progress_view.o: native/archive_progress_view.hpp
 native/%.o: native/%.cpp native/common.hpp native/app.hpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 arclight-resume-session: native/resume_session.o
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
-check: native-tests arclight-resume-session
+check: native-tests archive-tests arclight-resume-session
+	test -x share/50-arclight-kanshi-resume
 	./native-tests
+	./archive-tests
 	./arclight-resume-session --self-test
 clean:
-	rm -f native/*.o generated/*.o generated/*.c generated/*.h $(PROGRAMS) native-tests
+	rm -f native/*.o generated/*.o generated/*.c generated/*.h $(PROGRAMS) native-tests archive-tests

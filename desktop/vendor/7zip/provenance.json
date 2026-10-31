@@ -1,0 +1,74 @@
+{
+  "version": "25.01",
+  "commit": "5e96a8279489832924056b1fa82f29d5837c9469",
+  "url": "https://codeload.github.com/ip7z/7zip/tar.gz/5e96a8279489832924056b1fa82f29d5837c9469",
+  "bytes": 2221200,
+  "sha256": "723adfb79067f4f6611a12228017f8528a617b23ec5e1b55273732f534015069",
+  "files": [
+    {
+      "file": "C/7zTypes.h",
+      "sha256": "5de943c886d5d7bbcf16203e9b292a9e7be327b43fe3dfd9f4ad07d6d0870ef6"
+    },
+    {
+      "file": "C/7zWindows.h",
+      "sha256": "8e7d4ed4f6599ca599514d5c1710668a61865f0c11c44b47994aede33f4cac16"
+    },
+    {
+      "file": "C/Compiler.h",
+      "sha256": "e4b14a798e6c01bc885966249afa6b5061a5dd10c723ce86b254e89ae650de7f"
+    },
+    {
+      "file": "CPP/7zip/Archive/IArchive.h",
+      "sha256": "e169ef1ee0719a7001cc36048d28baaf80b630c70425d796e3e6391f0b42ebd1"
+    },
+    {
+      "file": "CPP/7zip/ICoder.h",
+      "sha256": "7e0f418800f3d3051bc69fd066fd4a504cdf241484654fa5fdfc863520569a6a"
+    },
+    {
+      "file": "CPP/7zip/IDecl.h",
+      "sha256": "1c04cb45a617b0c18c1c99f152338f817f930bd8a8d3f22da5c784edbdbcf026"
+    },
+    {
+      "file": "CPP/7zip/IPassword.h",
+      "sha256": "a9d6c99c6583aa1e8ee6b331cdb05953bdcba1ead8bdaf79193342771d5aa252"
+    },
+    {
+      "file": "CPP/7zip/IProgress.h",
+      "sha256": "d31f8793a4ed1490153df757b7d3a0316b0106b32205374ac427aac7455cb939"
+    },
+    {
+      "file": "CPP/7zip/IStream.h",
+      "sha256": "9168ccd4fb3576570668a4a606283e7d53d26fb3afb9a6a48c9800ac323b63f1"
+    },
+    {
+      "file": "CPP/7zip/PropID.h",
+      "sha256": "2e4da819a5672ef63255cc6525c1a7950401dcc3fd9fe94e80559eed805532bc"
+    },
+    {
+      "file": "CPP/Common/Common0.h",
+      "sha256": "db786d231aa5c39edaf829bb4c5ec0816d2e4f586003e3025427d29a52c5ff33"
+    },
+    {
+      "file": "CPP/Common/MyGuidDef.h",
+      "sha256": "907feaf6fa9ba09ed3b98ae584b8f19507f9ea8c2c35b134675afe5e80ba1a4e"
+    },
+    {
+      "file": "CPP/Common/MyTypes.h",
+      "sha256": "83d42b9d2a5ba4fcb7d8c258286e31d7cf0dbf2b87baef3f8fb5827fcc656c21"
+    },
+    {
+      "file": "CPP/Common/MyUnknown.h",
+      "sha256": "f6f4647c0030aebf75cb8a7677530b720d450306a794791eea8b089f30696ef7"
+    },
+    {
+      "file": "CPP/Common/MyWindows.h",
+      "sha256": "c7831821b05e601e2e12cfa87d30bba4529ec3ad256b8ad4eb1f967664bd1555"
+    },
+    {
+      "file": "CPP/Common/NewHandler.h",
+      "sha256": "35cedb8e93785c4c72b1685fdeb83cebcddafcf299872b0a8995991287063188"
+    }
+  ],
+  "note": "Unmodified public native interfaces only; codec runtime is the authenticated Debian 7zip package, not copied sources."
+}

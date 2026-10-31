@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "archive.hpp"
 #include "archive_progress_view.hpp"
+#include "archive_create_view.hpp"
 #include <gtk/gtk.h>
 #include <atomic>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <deque>
 #include <condition_variable>
@@ -18,7 +20,7 @@ struct Manager {
   bool running=false, extract_after_load=false, telemetry_active=false;
   std::string snapshot, current, failure;
   std::string smoke_output;bool smoke_cancel=false,smoke_paused=false,smoke_resumed=false,smoke_mid=false;
-  gint64 pause_started=0,paused_time=0,started=0,ended=0;
+  gint64 pause_started=0,paused_time=0,started=0,ended=0,last_sample=0;
   std::mutex mutex;std::condition_variable wake;
   ArchiveProgress stats;
   ArchiveProgressView details;
@@ -42,7 +44,7 @@ struct Manager {
     if(detailed && !p.complete)wake.wait(lock,[this]{return !paused || cancelled;});
     if(!p.complete)require(!cancelled,"操作已取消。已完整解出的文件保留，未完成的文件已移除。");
     current=p.file;
-    if(detailed){stats=p;if(!smoke_output.empty())samples.push_back(archive_progress_values(p,0));}
+    if(detailed){stats=p;if(!smoke_output.empty()&&(p.complete||g_get_monotonic_time()-last_sample>100000)){samples.push_back(archive_progress_values(p,0));last_sample=g_get_monotonic_time();}}
   };}
   void job(std::function<J()> fn,std::function<void(J)> done,
            const std::string &operation="",const std::string &destination="") {
@@ -88,9 +90,10 @@ struct Manager {
       catch(const std::exception &e){g_task_return_new_error(t,G_IO_ERROR,G_IO_ERROR_FAILED,"%s",e.what());}
     });g_object_unref(task);
   }
-  void load(const fs::path &p){
-    opened=fs::absolute(p);gtk_entry_set_text(GTK_ENTRY(path),opened.c_str());auto pw=secret();auto file=opened;
-    job([this,file,pw]{return archive_list(file,pw,report());},[this](J rows){
+  void load(const fs::path &p,const std::string &known_password=""){
+    auto file=fs::absolute(p);auto pw=known_password.empty()?secret():known_password;
+    job([this,file,pw]{return archive_list(file,pw,report());},[this,file](J rows){
+      opened=fs::absolute(archive_first_volume(file));gtk_entry_set_text(GTK_ENTRY(path),opened.c_str());
       gtk_list_store_clear(model);
       for(auto &r:rows){GtkTreeIter it;gtk_list_store_append(model,&it);
         auto name=r["path"].get<std::string>(),size=std::to_string(r["size"].get<int64_t>());
@@ -125,33 +128,17 @@ struct Manager {
     auto p=opened;auto pw=secret();job([this,p,dest,pw,replace]{archive_extract(p,dest,pw,replace,report(true));return J();},
       [this,dest](J){gtk_label_set_text(GTK_LABEL(status),("解压完成："+dest.string()).c_str());},"extract",dest.string());
   }
+  J load_options(){return yy::load(config()/"archive-options.json",J::object());}
   void create(std::vector<fs::path> sources={}){
-    auto d=gtk_dialog_new_with_buttons("添加到压缩包",GTK_WINDOW(window),GTK_DIALOG_MODAL,
-         "取消",GTK_RESPONSE_CANCEL,"创建",GTK_RESPONSE_OK,nullptr);
-    auto b=gtk_dialog_get_content_area(GTK_DIALOG(d));gtk_container_set_border_width(GTK_CONTAINER(b),16);gtk_box_set_spacing(GTK_BOX(b),10);
-    auto chosen=gtk_label_new("");gtk_label_set_line_wrap(GTK_LABEL(chosen),TRUE);gtk_label_set_max_width_chars(GTK_LABEL(chosen),55);
-    auto update=[&]{std::string s;for(auto &p:sources){if(!s.empty())s+='\n';s+=p.filename().string();}gtk_label_set_text(GTK_LABEL(chosen),s.empty()?"请选择要压缩的文件或文件夹":s.c_str());};
-    auto actions=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,6);
-    std::deque<std::function<void()>> callbacks;
-    for(bool folder:{false,true}){
-      auto w=gtk_button_new_with_label(folder?"添加文件夹…":"添加文件…");gtk_box_pack_start(GTK_BOX(actions),w,FALSE,FALSE,0);
-      callbacks.push_back([&,folder]{auto f=gtk_file_chooser_dialog_new("选择源文件",GTK_WINDOW(d),folder?GTK_FILE_CHOOSER_ACTION_SELECT_FOLDER:GTK_FILE_CHOOSER_ACTION_OPEN,
-          "取消",GTK_RESPONSE_CANCEL,"添加",GTK_RESPONSE_OK,nullptr);gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(f),TRUE);
-        if(gtk_dialog_run(GTK_DIALOG(f))==GTK_RESPONSE_OK){auto list=gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(f));for(auto n=list;n;n=n->next){sources.emplace_back(static_cast<char *>(n->data));g_free(n->data);}g_slist_free(list);update();}gtk_widget_destroy(f);});
-      g_signal_connect(w,"clicked",G_CALLBACK(+[](GtkButton *,gpointer p){(*static_cast<std::function<void()> *>(p))();}),&callbacks.back());
-    }
-    auto format=gtk_combo_box_text_new();for(auto id:{"zip","7z","tar.gz"})gtk_combo_box_text_append(GTK_COMBO_BOX_TEXT(format),id,id);gtk_combo_box_set_active(GTK_COMBO_BOX(format),0);
-    auto level=gtk_spin_button_new_with_range(0,9,1);gtk_spin_button_set_value(GTK_SPIN_BUTTON(level),5);
-    auto pw=gtk_entry_new();gtk_entry_set_visibility(GTK_ENTRY(pw),FALSE);gtk_entry_set_placeholder_text(GTK_ENTRY(pw),"可选密码：仅 ZIP，AES-256");
-    for(auto w:{chosen,actions,gtk_label_new("格式"),format,gtk_label_new("压缩级别（0–9）"),level,pw})gtk_box_pack_start(GTK_BOX(b),w,FALSE,FALSE,0);
-    update();gtk_widget_show_all(d);
-    bool yes=gtk_dialog_run(GTK_DIALOG(d))==GTK_RESPONSE_OK;
-    std::string fmt=gtk_combo_box_get_active_id(GTK_COMBO_BOX(format)),pass=gtk_entry_get_text(GTK_ENTRY(pw));int lev=gtk_spin_button_get_value_as_int(GTK_SPIN_BUTTON(level));
-    gtk_entry_set_text(GTK_ENTRY(pw),"");gtk_widget_destroy(d);if(!yes||sources.empty())return;
+    ArchiveOptions options;
+    try{options=archive_options_from_json(load_options());}catch(...){options=ArchiveOptions{};}
+    if(!archive_create_dialog(GTK_WINDOW(window),sources,options))return;
+    write(config()/"archive-options.json",archive_options_json(options).dump(2),true);
+    auto fmt=options.format;
     auto f=gtk_file_chooser_dialog_new("保存压缩包",GTK_WINDOW(window),GTK_FILE_CHOOSER_ACTION_SAVE,"取消",GTK_RESPONSE_CANCEL,"创建",GTK_RESPONSE_OK,nullptr);
     gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(f),(sources[0].filename().string()+"."+fmt).c_str());
     fs::path output;if(gtk_dialog_run(GTK_DIALOG(f))==GTK_RESPONSE_OK){auto p=gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(f));output=p;g_free(p);}gtk_widget_destroy(f);if(output.empty())return;
-    job([this,output,sources,fmt,lev,pass]{archive_create(output,sources,fmt,lev,pass,report(true));return J();},[this,output](J){load(output);},"create",output.string());
+    job([this,output,sources,options]{archive_create(output,sources,options,report(true));return J();},[this,output,options](J){load(options.volume_bytes?fs::path(output.string()+".001"):output,options.password);},"create",output.string());
   }
   static void idle_snapshot(Manager *m){
     g_idle_add(+[](gpointer p)->gboolean{auto m=static_cast<Manager *>(p);
@@ -160,8 +147,8 @@ struct Manager {
   }
   void progress_smoke(const fs::path &input,const fs::path &out,bool cancel_test){
     fs::create_directories(out);smoke_output=out.string();smoke_cancel=cancel_test;
-    auto output=out/"sample.zip";
-    job([this,input,output]{archive_create(output,{input},"zip",5,"",report(true));return J();},[](J){},"create",output.string());
+    auto output=out/"sample.7z";
+    job([this,input,output]{archive_create(output,{input},"7z",5,"",report(true));return J();},[](J){},"create",output.string());
   }
   void ui(){
     window=gtk_window_new(GTK_WINDOW_TOPLEVEL);gtk_window_set_title(GTK_WINDOW(window),"弧光压缩文件管理器");gtk_window_set_default_size(GTK_WINDOW(window),900,600);
@@ -181,7 +168,7 @@ struct Manager {
     model=gtk_list_store_new(3,G_TYPE_STRING,G_TYPE_STRING,G_TYPE_STRING);view=gtk_tree_view_new_with_model(GTK_TREE_MODEL(model));g_object_unref(model);
     int col=0;for(auto title:{"名称 / 路径","大小（字节）","类型"}){auto renderer=gtk_cell_renderer_text_new();auto c=gtk_tree_view_column_new_with_attributes(title,renderer,"text",col++,nullptr);gtk_tree_view_column_set_resizable(c,TRUE);gtk_tree_view_column_set_sort_column_id(c,col-1);gtk_tree_view_append_column(GTK_TREE_VIEW(view),c);}
     auto scroll=gtk_scrolled_window_new(nullptr,nullptr);gtk_container_add(GTK_CONTAINER(scroll),view);gtk_box_pack_start(GTK_BOX(b),scroll,TRUE,TRUE,0);
-    status=gtk_label_new("支持 ZIP、7z、TAR、RAR 等格式读取；创建 ZIP、7z、tar.gz。");gtk_label_set_ellipsize(GTK_LABEL(status),PANGO_ELLIPSIZE_MIDDLE);gtk_box_pack_start(GTK_BOX(b),status,FALSE,FALSE,0);
+    status=gtk_label_new("支持 ZIP、7z、TAR、RAR 等；创建多种格式，支持分卷、密码及高级压缩参数。");gtk_label_set_ellipsize(GTK_LABEL(status),PANGO_ELLIPSIZE_MIDDLE);gtk_box_pack_start(GTK_BOX(b),status,FALSE,FALSE,0);
     auto row=gtk_box_new(GTK_ORIENTATION_HORIZONTAL,8);progress=gtk_progress_bar_new();gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress),TRUE);cancel=gtk_button_new_with_label("取消操作");gtk_widget_set_sensitive(cancel,FALSE);
     gtk_box_pack_start(GTK_BOX(row),progress,TRUE,TRUE,0);show_progress=gtk_button_new_with_label("显示进度");gtk_widget_set_sensitive(show_progress,FALSE);
     gtk_box_pack_start(GTK_BOX(row),show_progress,FALSE,FALSE,0);gtk_box_pack_start(GTK_BOX(row),cancel,FALSE,FALSE,0);
@@ -218,9 +205,17 @@ struct Manager {
 }
 int main(int argc,char **argv){
   try {
+    if(argc==2 && std::string(argv[1])=="--version"){std::cout<<"Arclight Archive "<<ARCLIGHT_DESKTOP_VERSION<<" (C++17 / GTK 3)\n";return 0;}
     if(argc==3 && std::string(argv[1])=="--list-json"){std::cout<<archive_list(argv[2]).dump(2)<<'\n';return 0;}
     if(argc==4 && std::string(argv[1])=="--extract-test"){archive_extract(argv[2],argv[3],"",false);return 0;}
+    if(argc==3 && std::string(argv[1])=="--create-plan"){
+      auto j=J::parse(read(argv[2]));auto options=archive_options_from_json(j.value("options",J::object()));options.password=j.value("password",std::string());
+      std::vector<fs::path> inputs;for(auto &p:j.at("inputs"))inputs.emplace_back(p.get<std::string>());
+      std::ofstream telemetry;auto trace=j.value("telemetry",std::string());if(!trace.empty())telemetry.open(trace);
+      gint64 last=0;archive_create(j.at("output").get<std::string>(),inputs,options,[&](const ArchiveProgress &p){auto now=g_get_monotonic_time();if(telemetry&&(p.complete||now-last>100000)){telemetry<<archive_progress_values(p,0).dump()<<'\n';last=now;}});return 0;
+    }
     gtk_init(&argc,&argv);Manager m;m.ui();
+    if(argc==4 && std::string(argv[1])=="--options-smoke"){std::vector<fs::path> files{argv[2]};ArchiveOptions o;archive_create_dialog(GTK_WINDOW(m.window),files,o,argv[3]);return 0;}
     if(argc==4 && (std::string(argv[1])=="--progress-smoke" || std::string(argv[1])=="--cancel-smoke")){m.progress_smoke(argv[2],argv[3],std::string(argv[1])=="--cancel-smoke");}
     else if(argc==4 && std::string(argv[1])=="--ui-smoke"){m.snapshot=argv[3];m.load(argv[2]);}
     else if(argc>=3 && std::string(argv[1])=="--create"){std::vector<fs::path> paths;for(int i=2;i<argc;++i)paths.emplace_back(argv[i]);m.create(paths);}

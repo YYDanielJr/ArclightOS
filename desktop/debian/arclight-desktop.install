@@ -21,3 +21,6 @@ share/80-arclight-kernel-policy etc/apt/preferences.d
 arclight-archive usr/bin
 share/arclight-archive.desktop usr/share/applications
 wayland-protocols-copyright usr/share/doc/arclight-desktop
+vendor/7zip/License.txt usr/share/doc/arclight-desktop/7zip
+vendor/7zip/Debian-copyright usr/share/doc/arclight-desktop/7zip
+vendor/7zip/provenance.json usr/share/doc/arclight-desktop/7zip
