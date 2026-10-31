@@ -49,3 +49,5 @@ python3 scripts/test-archive-gui.py /absolute/path/to/arclight-archive /absolute
 最终源码包通过 75 项原生、119 项高级压缩和 17 项恢复策略检查；最终 DEB 另行通过 11 项按页应用和上述 GUI 验证。96 MiB 7z 测试在约 1 MiB 输入时已有 68.0% 的实时比例，完成前记录了 44 次实时样本。该数值取决于测试内容，不代表 ISO 的可压缩率或实体性能基准。
 
 DEB SHA256：`221e116440484eb4131d1fa93f72720dd7baef2f2cf884ceabcb84f396950dcd`。构建会检查系统唤醒 hook 的可执行权限。独立附件及校验记录在 `ArclightOS-release/desktop-0.8.0/`，不会加入 Git。
+
+本机已在用户完成 PolicyKit 验证后安装 0.8.0，安装文件哈希与上述最终包一致；dpkg 审计和 APT 检查通过，唤醒 hook 保持可执行，没有新增失败服务。没有重启桌面或内核。回退包保留在 `/var/backups/arclight-desktop-0.8.0-20261031/`。安装结果单独记录在 `arclight-desktop-0.8.0-installed.json`，冻结的工程源码归档保持不变。

@@ -241,4 +241,4 @@ Get-FileHash -Algorithm SHA256 -LiteralPath dist/astgenne-os-trixie-amd64.iso
 
 最终 DEB SHA256：`221e116440484eb4131d1fa93f72720dd7baef2f2cf884ceabcb84f396950dcd`。干净源码构建通过 75 项原生、119 项高级压缩、17 项恢复策略和 11 项按页应用检查；最终包的独立 Wayland 验证覆盖 7 格式 × 3 选项页 × 3 种缩放，以及真实 96 MiB 7z 压缩、暂停和取消，完成前采集到 44 次实时编码器比例。构建额外强制校验唤醒 hook 的可执行权限，防止工作副本权限丢失导致睡眠回归。实体睡眠等硬件验收范围没有扩大。
 
-本轮工作区 `.local/desktop-0.8.0/`。独立发布附件放到相邻 `ArclightOS-release/desktop-0.8.0/`，公开源码同步到 `ArclightOS/`。0.7.1 完整 ISO、冻结源码与 17 项清单均不改写。本机安装事务需要系统原生 PolicyKit 验证；实际是否安装成功以本轮 validation 的 `installed` 字段和 `dpkg-query` 为准，不能仅凭已构建的包宣称安装完成。
+本轮工作区 `.local/desktop-0.8.0/`。独立发布附件放到相邻 `ArclightOS-release/desktop-0.8.0/`，公开源码同步到 `ArclightOS/`。0.7.1 完整 ISO、冻结源码与 17 项清单均不改写。用户已完成系统原生 PolicyKit 验证，本机现已安装并核验 **arclight-desktop / yydaniel-desktop 0.8.0**；7 个 ELF 及会话副本与最终 DEB 哈希一致，唤醒 hook 可执行，dpkg 审计为空，APT 检查通过，无新增失败服务。0.7.1 回退包及安装前状态保存在 `/var/backups/arclight-desktop-0.8.0-20261031/`；没有重启桌面、切换内核或主动睡眠。最终安装记录为 `arclight-desktop-0.8.0-installed.json`，validation 的 `installed` 为 true。冻结源码归档中的安装等待状态是导出当时的记录，不覆写该归档。
