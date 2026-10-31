@@ -13,8 +13,8 @@ AscalonKernel（阿斯卡纶内核）基于锁定的 Linux 上游源码，采用
 | 基础桌面 | Raspberry Pi Desktop amd64 Trixie；官方 ISO 固定 SHA256 |
 | AscalonKernel | Linux 7.3 + 移植的 BORE；release `7.3.0-ascalonkernel` |
 | 回退内核 | 本地源码构建的 Debian 6.12.113，独立保留 |
-| 原生桌面工具 | `arclight-desktop` 0.8.0（当前源码）；C++17 / GTK 3 |
-| 设置 | 19 分类、45 视图，按页面应用，显示变更独立进程自动回退 |
+| 原生桌面工具 | `arclight-desktop` 0.9.1（当前源码）；C++17 / GTK 3 |
+| 设置 | 19 分类、49 视图，待应用计数与位置跳转，显示变更独立进程自动回退 |
 | 截图 | 窗口选区、区域截图、箭头、形状、文字和剪贴板 |
 | 压缩管理器 | GTK / 原生 7-Zip + libarchive；算法、线程、字典、固实、加密、分卷和编码器实时压缩比 |
 | NVIDIA 可选驱动 | 615.78.08；开放模块源码构建，用户态和 GSP 使用同版本官方二进制 |
@@ -23,13 +23,13 @@ AscalonKernel（阿斯卡纶内核）基于锁定的 Linux 上游源码，采用
 
 ## 安装与发布文件
 
-完整镜像为 `arclightos-trixie-amd64-20261031-0.8.0.iso`，支持 BIOS / UEFI Live 与 Calamares 离线安装。下载后先按该版 `arclight-release.sha256` 检查哈希。实际验收范围见随版 `arclight-release-validation.json` 和 [发布说明](docs/release-readme.md)。旧镜像通过的项目不会自动计为新版通过。
+完整镜像为 `arclightos-trixie-amd64-20261101-0.9.1.iso`，支持 BIOS / UEFI Live 与 Calamares 离线安装。下载后先按该版 `arclight-release.sha256` 检查哈希。实际验收范围见随版 `arclight-release-validation.json` 和 [发布说明](docs/release-readme.md)。旧镜像通过的项目不会自动计为新版通过。
 
-当前完整 ISO 已整合桌面 0.8.0，支持独立 Live 与离线安装，见 [新镜像](docs/image-0.8.0.md)及[高级压缩与实时统计](docs/desktop-0.8.0.md)。0.7.1 的历史哈希与报告继续保留。
+当前完整 ISO 已整合桌面 0.9.1，支持独立 Live 与离线安装，见 [新镜像](docs/image-0.9.1.md)、[设置与 OSD](docs/desktop-0.9.1.md)及[高级压缩](docs/desktop-0.8.0.md)。0.8.0 和更早发行的历史哈希与报告继续保留。
 
 ISO、DEB、对应源码归档和大型构建证据属于 Release 附件，不进入 Git 历史。运行系统中的普通用户、密钥、网络配置和缓存不会复制进镜像。
 
-使用 VS Code 发布源码与手动上传 Release，见 [发布步骤](docs/github.md)。本机源码仓库为 `ArclightOS/`，已验证的完整镜像和配套发布文件位于相邻的 `ArclightOS-release/20261031-0.8.0/`，与源码目录分开保留。镜像由维护者自行压缩上传。
+使用 VS Code 发布源码与手动上传 Release，见 [发布步骤](docs/github.md)。本机源码仓库为 `ArclightOS/`，已验证的完整镜像和配套发布文件位于相邻的 `ArclightOS-release/20261101-0.9.1/`，与源码目录分开保留。镜像由维护者自行压缩上传。
 
 ## 构建
 

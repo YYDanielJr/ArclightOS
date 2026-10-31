@@ -22,6 +22,18 @@ if [[ -n ${ARCLIGHT_TOOLS:-} ]]; then
     flags=(--no-check-builddeps)
 fi
 dpkg-buildpackage -us -uc "${flags[@]}"
+python3 - "../arclight-desktop_${version}.tar.xz" <<'PY_SOURCE'
+import sys, tarfile
+with tarfile.open(sys.argv[1], 'r|xz') as archive:
+    for entry in archive:
+        if not entry.isfile():
+            continue
+        name = entry.name
+        assert '/debian/.debhelper/' not in name and '/debian/arclight-desktop/' not in name, name
+        assert not name.endswith(('.o', '.deb', '.ddeb')), name
+        assert archive.extractfile(entry).read(4) != b'\x7fELF', 'Compiled payload in source archive: ' + name
+print('Corresponding desktop source contains no compiled payloads')
+PY_SOURCE
 test "$(./arclight-settings --version)" = "ArclightOS Settings $version (C++17 / GTK 3)"
 # Reject payloads that would silently disable sleep recovery after an upgrade.
 python3 - "../arclight-desktop_${version}_amd64.deb" <<'PY_CHECK'

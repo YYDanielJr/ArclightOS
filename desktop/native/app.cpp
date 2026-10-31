@@ -146,6 +146,7 @@ void clear(GtkWidget *w) {
 }
 App::App() { host = this; }
 App::~App() {
+  *lifetime = false;
   alive = false;
   for (auto &t : workers)
     if (t.joinable())
@@ -156,6 +157,59 @@ App::~App() {
             lifetime. */
   }
   host = nullptr;
+}
+struct BackgroundSlot { std::atomic<bool> valid{true}; bool busy=false; };
+void App::background(GtkWidget *root, std::function<J()> read, std::function<void(J)> done) {
+  struct Job {
+    App *app; std::shared_ptr<std::atomic<bool>> life; std::shared_ptr<BackgroundSlot> slot;
+    GtkWidget *root; std::function<J()> read; std::function<void(J)> done; J result; std::string error;
+  };
+  auto stored=static_cast<std::shared_ptr<BackgroundSlot>*>(g_object_get_data(G_OBJECT(root),"settings-background-slot"));
+  if(!stored) {
+    stored=new std::shared_ptr<BackgroundSlot>(std::make_shared<BackgroundSlot>());
+    g_object_set_data_full(G_OBJECT(root),"settings-background-slot",stored,+[](gpointer p){delete static_cast<std::shared_ptr<BackgroundSlot>*>(p);});
+    g_signal_connect(root,"destroy",G_CALLBACK(+[](GtkWidget*,gpointer p){(*static_cast<std::shared_ptr<BackgroundSlot>*>(p))->valid=false;}),stored);
+  }
+  if((*stored)->busy)return;
+  (*stored)->busy=true;
+  auto job=new Job{this,lifetime,*stored,root,std::move(read),std::move(done),nullptr,""};
+  auto task=g_task_new(nullptr,nullptr,+[](GObject*,GAsyncResult *result,gpointer) {
+    auto j=static_cast<Job*>(g_task_get_task_data(G_TASK(result)));
+    j->slot->busy=false;
+    if(!*j->life || !j->slot->valid)return;
+    auto a=j->app;
+    if(a->applying_page || (a->tasks && !a->smoke) || gtk_grab_get_current())return;
+    auto windows=gtk_window_list_toplevels();bool modal=false;
+    for(auto p=windows;p;p=p->next)modal|=gtk_window_get_modal(GTK_WINDOW(p->data)) && gtk_widget_get_visible(GTK_WIDGET(p->data));
+    g_list_free(windows);if(modal)return;
+    if(!j->error.empty()) { a->status(j->error);return; }
+    a->guard([&] {
+      a->loading_controls=true;
+      try{j->done(std::move(j->result));}catch(...){a->loading_controls=false;throw;}
+      a->loading_controls=false;normalize_layout(j->root);a->track_page(j->root);a->update_apply();
+    });
+  },nullptr);
+  g_task_set_task_data(task,job,+[](gpointer p){delete static_cast<Job*>(p);});
+  g_task_run_in_thread(task,+[](GTask *task,gpointer,gpointer data,GCancellable*) {
+    auto j=static_cast<Job*>(data);
+    try{j->result=j->read();}catch(const std::exception &e){j->error=e.what();}
+    g_task_return_boolean(task,TRUE);
+  });g_object_unref(task);
+}
+void App::poll_page(GtkWidget *root,unsigned seconds,Fn poll,Fn leave) {
+  struct Watch { App *app; GtkWidget *root; unsigned seconds; Fn poll,leave; bool active=false; gint64 next=0; };
+  auto watch=new Watch{this,root,seconds,std::move(poll),std::move(leave)};
+  auto timer=g_timeout_add_full(G_PRIORITY_DEFAULT,1000,+[](gpointer p)->gboolean {
+    auto w=static_cast<Watch*>(p);auto a=w->app;
+    bool active=a->alive && gtk_widget_get_mapped(w->root) && !a->smoke;
+    if(!active && w->active && w->leave)w->leave();
+    auto now=g_get_monotonic_time();
+    if(active && (!w->active || now>=w->next) && !a->tasks && !a->applying_page) {
+      w->poll();w->next=now+w->seconds*G_USEC_PER_SEC;
+    }
+    w->active=active;return G_SOURCE_CONTINUE;
+  },watch,+[](gpointer p){auto w=static_cast<Watch*>(p);if(w->active && w->leave)w->leave();delete w;});
+  g_signal_connect_data(root,"destroy",G_CALLBACK(+[](GtkWidget*,gpointer p){g_source_remove(GPOINTER_TO_UINT(p));}),GUINT_TO_POINTER(timer),nullptr,GConnectFlags(0));
 }
 GtkWidget *App::box() {
   auto b = gtk_box_new(GTK_ORIENTATION_VERTICAL, 4);
@@ -236,6 +290,7 @@ GtkWidget *App::setting(GtkWidget *parent, const std::string &title,
   }
   gtk_box_pack_start(GTK_BOX(row), labels, TRUE, TRUE, 0);
   if (control) {
+    g_object_set_data_full(G_OBJECT(control), "settings-label", g_strdup(title.c_str()), g_free);
     gtk_widget_set_valign(control, GTK_ALIGN_CENTER);
     gtk_box_pack_end(GTK_BOX(row), control, FALSE, FALSE, 0);
   }
@@ -525,6 +580,10 @@ void App::create() {
   gtk_box_pack_start(GTK_BOX(header), titles, TRUE, TRUE, 0);
   spinner = gtk_spinner_new();
   gtk_box_pack_start(GTK_BOX(header), spinner, FALSE, FALSE, 0);
+  pending_button = button("没有未应用的更改", [this] { show_pending(); });
+  gtk_button_set_relief(GTK_BUTTON(pending_button), GTK_RELIEF_NONE);
+  gtk_widget_set_tooltip_text(pending_button, "查看所有尚未应用的项目并跳转到对应页面。应用只保存当前标签页。");
+  gtk_box_pack_start(GTK_BOX(header), pending_button, FALSE, FALSE, 0);
   apply_button = button("应用", [this] { apply_native(); });
   gtk_widget_set_sensitive(apply_button, FALSE);
   gtk_box_pack_start(GTK_BOX(header), apply_button, FALSE, FALSE, 0);
@@ -582,6 +641,7 @@ void App::select(const std::string &id) {
       if (row && id == static_cast<const char *>(
                            g_object_get_data(G_OBJECT(row), "id")))
         gtk_stack_set_visible_child_name(GTK_STACK(stack), id.c_str());
+      update_apply();
     });
   }
   gtk_stack_set_visible_child_name(GTK_STACK(stack), id.c_str());

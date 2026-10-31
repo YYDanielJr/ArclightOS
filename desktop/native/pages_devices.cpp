@@ -41,8 +41,23 @@ GtkWidget *App::display_page() {
                             {"flipped-270", "翻转并旋转 270°"}},
                            snap[i]["transform"]);
     setting(g, "分辨率与刷新率", "", mode);
-    setting(g, "缩放（%）", "支持各屏独立缩放，125% / 150% 可用于 HiDPI。",
+    setting(g, "缩放（%）", "",
             scale);
+    auto space=note("");
+    auto update_space=[scale,mode,transform,space] {
+      std::smatch m; auto selected=choice(mode);
+      if(std::regex_search(selected,m,std::regex("^([0-9]+)x([0-9]+)"))) {
+        int width=std::stoi(m[1]),height=std::stoi(m[2]);
+        auto rotation=choice(transform);
+        if(rotation=="90" || rotation=="270" || rotation=="flipped-90" || rotation=="flipped-270")std::swap(width,height);
+        auto factor=decimal(scale)/100.;
+        auto label="桌面有效空间："+std::to_string(int(std::lround(width/factor)))+" × "+std::to_string(int(std::lround(height/factor)))+"";
+        gtk_label_set_text(GTK_LABEL(space),label.c_str());
+      }
+    };
+    for(auto control:{scale,mode,transform})
+      g_signal_connect_data(control,control==scale?"value-changed":"changed",G_CALLBACK(+[](GtkWidget*,gpointer p){(*static_cast<Fn*>(p))();}),new Fn(update_space),+[](gpointer p,GClosure*){delete static_cast<Fn*>(p);},GConnectFlags(0));
+    update_space(); gtk_box_pack_start(GTK_BOX(g),space,FALSE,FALSE,4);
     setting(g, "水平位置", "使用缩放后的逻辑像素坐标。", x);
     setting(g, "垂直位置", "", y);
     setting(g, "屏幕方向", "", transform);
@@ -128,14 +143,11 @@ GtkWidget *App::display_page() {
                  }
                } catch (...) {
                  display_rollback(lease);
-                 throw;
+                   throw;
                }
-             }),
+             }, b),
       FALSE, FALSE, 0);
   gtk_box_pack_start(GTK_BOX(b), buttons, FALSE, FALSE, 8);
-  setting(b, "排列与镜像",
-          "拖动屏幕图形、设置镜像可使用“屏幕排列与镜像”标签页。此页面应用设置后"
-          "会保存 kanshi 配置，并备份已有内容。");
   return scroll(b);
 }
 GtkWidget *App::brightness_page() {
@@ -160,22 +172,12 @@ GtkWidget *App::brightness_page() {
                  [this, name, maximum, s] {
                    int v = std::max(1, int(maximum * decimal(s) / 100));
                    action([name, v] {
-                     auto r = dbus(
-                         "org.freedesktop.login1", "/org/freedesktop/login1",
-                         "org.freedesktop.login1.Manager", "ListSessions");
-                     auto sessions = unpack(r)[0];
-                     g_variant_unref(r);
-                     for (auto &row : sessions)
-                       if (row[1] == getuid() && row[3] != "") {
-                         auto v2 = dbus("org.freedesktop.login1", row[4],
+                         auto v2 = dbus("org.freedesktop.login1", active_graphical_session(),
                                         "org.freedesktop.login1.Session",
                                         "SetBrightness",
                                         g_variant_new("(ssu)", "backlight",
                                                       name.c_str(), guint(v)));
                          g_variant_unref(v2);
-                         return;
-                       }
-                     throw std::runtime_error("未找到本机图形会话。");
                    });
                  }),
           FALSE, FALSE, 4);
@@ -198,7 +200,7 @@ GtkWidget *App::power_page() {
       if (details.find(id + ":") != details.npos)
         p.push_back({id, label});
     auto c = combo(p, trim(run({"powerprofilesctl", "get"})));
-    setting(g, "工作模式", "仅显示硬件支持的模式。虚拟机通常没有性能模式。", c);
+    setting(g, "工作模式", "仅显示硬件支持的模式。", c);
     gtk_box_pack_start(
         GTK_BOX(g),
         save_button("应用电源模式",
@@ -296,152 +298,79 @@ GtkWidget *App::power_page() {
                    [this](J) { status("系统电源策略已保存，重启后生效。"); });
              }),
       FALSE, FALSE, 6);
-  setting(sys, "生效条件",
-          "系统策略需要管理员认证，重启后生效。休眠选项由系统能力决定；硬件强制"
-          "断电不受此设置控制。");
   return scroll(b);
 }
 GtkWidget *App::network_page() {
-  auto b = box(), connections = section(b, "网络连接"), devices = box();
-  gtk_box_pack_start(GTK_BOX(connections), devices, FALSE, FALSE, 0);
-  auto wifi = section(b, "无线网络"), wifi_list = box();
-  auto radio = toggle();
-  gtk_widget_set_sensitive(radio, FALSE);
-  setting(wifi, "无线开关", "仅在检测到无线网卡时可用。", radio);
-  auto apply = save_button("应用无线开关", [this, radio] {
-    auto on = active(radio);
-    action([on] { run({"nmcli", "radio", "wifi", on ? "on" : "off"}); });
-  });
-  gtk_widget_set_sensitive(apply, FALSE);
-  gtk_box_pack_start(GTK_BOX(wifi), apply, FALSE, FALSE, 4);
-  gtk_box_pack_start(GTK_BOX(wifi), wifi_list, FALSE, FALSE, 0);
-  auto scan = [this, wifi_list] {
-    work(
-        [] {
-          return J(
-              lines(run({"nmcli", "-t", "-f", "IN-USE,SSID,SIGNAL,SECURITY",
-                         "device", "wifi", "list"})));
-        },
-        [this, wifi_list](J raw) {
-          clear(wifi_list);
-          std::set<std::string> seen;
-          for (auto &line : raw) {
-            auto f = fields(line);
-            if (f.size() < 4 || f[1].empty() || !seen.insert(f[1]).second)
-              continue;
-            setting(
-                wifi_list, f[1], "信号 " + f[2] + "% · " + f[3],
-                button(f[0] == "*" ? "已连接" : "连接…", [this, f] {
-                  bool ok = true;
-                  std::string password;
-                  if (!f[3].empty() && f[3] != "--")
-                    password =
-                        ask("连接 " + f[1],
-                            "输入网络密码。企业认证网络请使用连接编辑器。",
-                            true, &ok);
-                  if (ok) {
-                    require(safe(password), "密码不能包含换行。");
-                    action([f, password] {
-                      run({"nmcli", "--ask", "device", "wifi", "connect", f[1]},
-                          password + "\n", 120);
-                    });
-                  }
-                }));
-          }
-          if (seen.empty())
-            setting(wifi_list, "没有发现无线网络",
-                    "检查无线开关，或重新扫描。");
-          gtk_widget_show_all(wifi_list);
-        });
+  auto wired=box(),wifi=box(),other=box(),proxy_page=box();
+  auto wired_list=box(),wireless_devices=box(),other_list=box(),wifi_list=box();
+  gtk_box_pack_start(GTK_BOX(wired),wired_list,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(other),other_list,FALSE,FALSE,0);
+  auto controls=section(wifi,"Wi-Fi");auto radio=toggle();
+  gtk_widget_set_sensitive(radio,FALSE);setting(controls,"无线网络","",radio);
+  auto apply=save_button("应用无线开关",[this,radio]{auto on=active(radio);action([on]{run({"nmcli","radio","wifi",on?"on":"off"});});});
+  gtk_box_pack_start(GTK_BOX(controls),apply,FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(wifi),wireless_devices,FALSE,FALSE,0);
+  auto networks=section(wifi,"可用网络");gtk_box_pack_start(GTK_BOX(networks),wifi_list,FALSE,FALSE,0);
+  auto collect=[](bool scan) {
+    J result;result["devices"]=lines(run({"nmcli","-t","-f","DEVICE,TYPE,STATE,CONNECTION","device"},"",8));
+    bool wireless=false;for(auto &line:result["devices"]){auto f=fields(line);wireless|=f.size()>=2 && f[1]=="wifi";}
+    result["wireless"]=wireless;result["enabled"]=false;result["aps"]=J::array();
+    if(wireless) {
+      result["enabled"]=trim(run({"nmcli","radio","wifi"},"",5))=="enabled";
+      if(result["enabled"].get<bool>()) {
+        if(scan)try{run({"nmcli","device","wifi","rescan"},"",8);}catch(...){}
+        result["aps"]=lines(run({"nmcli","-t","-f","IN-USE,SSID,SIGNAL,SECURITY","device","wifi","list","--rescan","no"},"",8));
+      }
+    }
+    return result;
   };
-  auto scan_button = button("扫描无线网络", scan);
-  gtk_widget_set_sensitive(scan_button, FALSE);
-  gtk_box_pack_start(GTK_BOX(wifi), scan_button, FALSE, FALSE, 4);
-  auto refresh = [this, devices, wifi_list, radio, apply, scan_button] {
-    work(
-        [] {
-          return J(lines(run({"nmcli", "-t", "-f",
-                              "DEVICE,TYPE,STATE,CONNECTION", "device"})));
-        },
-        [this, devices, wifi_list, radio, apply, scan_button](J raw) {
-          clear(devices);
-          bool wireless = false;
-          for (auto &line : raw) {
-            auto f = fields(line);
-            if (f.size() < 4 || f[1] == "loopback")
-              continue;
-            wireless |= f[1] == "wifi";
-            auto group = section(devices, f[0] + " · " +
-                                              (f[1] == "ethernet" ? "有线网络"
-                                               : f[1] == "wifi"   ? "无线网络"
-                                                                  : f[1]));
-            static const std::map<std::string, std::string> states = {
-                {"connected", "已连接"},
-                {"disconnected", "未连接"},
-                {"unavailable", "不可用"},
-                {"unmanaged", "未由 NetworkManager 管理"}};
-            setting(group, "连接状态",
-                    (states.count(f[2]) ? states.at(f[2]) : f[2]) + " · " +
-                        f[3]);
-            gtk_box_pack_start(
-                GTK_BOX(group),
-                button("查看 IP、DNS 与硬件地址",
-                       [this, f] {
-                         work(
-                             [f] {
-                               return J(run({"nmcli", "-f", "GENERAL,IP4,IP6",
-                                             "device", "show", f[0]}));
-                             },
-                             [this](J j) {
-                               auto d = gtk_message_dialog_new(
-                                   GTK_WINDOW(window), GTK_DIALOG_MODAL,
-                                   GTK_MESSAGE_INFO, GTK_BUTTONS_CLOSE,
-                                   "网络连接详情");
-                               gtk_message_dialog_format_secondary_text(
-                                   GTK_MESSAGE_DIALOG(d), "%s",
-                                   j.get<std::string>().c_str());
-                               gtk_dialog_run(GTK_DIALOG(d));
-                               gtk_widget_destroy(d);
-                             });
-                       }),
-                FALSE, FALSE, 4);
-            if (f[2] == "connected")
-              gtk_box_pack_start(
-                  GTK_BOX(group),
-                  button("断开连接…",
-                         [this, f] {
-                           if (confirm("断开网络连接？",
-                                       "使用此网卡的远程会话和下载会中断。"))
-                             action([f] {
-                               run({"nmcli", "device", "disconnect", f[0]});
-                             });
-                         }),
-                  FALSE, FALSE, 4);
-          }
-          gtk_widget_set_sensitive(radio, wireless);
-          gtk_widget_set_sensitive(apply, wireless);
-          gtk_widget_set_sensitive(scan_button, wireless);
-          if (wireless)
-            work([] { return J(trim(run({"nmcli", "radio", "wifi"}))); },
-                 [radio](J j) {
-                   gtk_switch_set_active(GTK_SWITCH(radio), j == "enabled");
-                 });
-          else {
-            clear(wifi_list);
-            setting(wifi_list, "未检测到无线网卡",
-                    "Hyper-V 合成网卡显示为有线设备。");
-          }
-          gtk_widget_show_all(devices);
-          gtk_widget_show_all(wifi_list);
+  auto previous=std::make_shared<J>();
+  auto render=[this,wired_list,wireless_devices,other_list,wifi_list,controls,radio,apply,previous](J data) {
+    gtk_widget_set_sensitive(radio,data["wireless"]);gtk_widget_set_sensitive(apply,data["wireless"]);
+    if(!page_dirty(controls))gtk_switch_set_active(GTK_SWITCH(radio),data["enabled"]);
+    if(!previous->is_null() && *previous==data)return;
+    *previous=data;
+    for(auto list:{wired_list,wireless_devices,other_list,wifi_list})clear(list);
+    int wired_count=0,other_count=0;
+    for(auto &line:data["devices"]) {
+      auto f=fields(line);if(f.size()<4 || f[1]=="loopback" || f[1]=="wifi-p2p")continue;
+      auto list=f[1]=="ethernet"?wired_list:f[1]=="wifi"?wireless_devices:other_list;
+      wired_count+=list==wired_list;other_count+=list==other_list;
+      auto group=section(list,f[0]);std::string status=f[2];
+      if(status.rfind("connected",0)==0)status="已连接";else if(status=="disconnected")status="未连接";else if(status=="unavailable")status="不可用";else if(status=="unmanaged")status="未托管";else if(status=="connecting")status="正在连接";
+      if(!f[3].empty() && f[3]!="--")status+="  "+f[3];
+      setting(group,"状态",status);
+      gtk_box_pack_start(GTK_BOX(group),button("连接详情",[this,f]{
+        work([f]{return J(run({"nmcli","-f","GENERAL,IP4,IP6","device","show",f[0]}));},[this](J value){
+          auto d=gtk_message_dialog_new(GTK_WINDOW(window),GTK_DIALOG_MODAL,GTK_MESSAGE_INFO,GTK_BUTTONS_CLOSE,"连接详情");
+          gtk_message_dialog_format_secondary_text(GTK_MESSAGE_DIALOG(d),"%s",value.get<std::string>().c_str());gtk_dialog_run(GTK_DIALOG(d));gtk_widget_destroy(d);
         });
+      }),FALSE,FALSE,0);
+      if(f[2].rfind("connected",0)==0)gtk_box_pack_start(GTK_BOX(group),button("断开连接",[this,f]{if(confirm("断开连接？",f[0]))action([f]{run({"nmcli","device","disconnect",f[0]});});}),FALSE,FALSE,0);
+    }
+    if(!wired_count)gtk_box_pack_start(GTK_BOX(wired_list),note("未检测到有线网卡"),FALSE,FALSE,0);
+    if(!other_count)gtk_box_pack_start(GTK_BOX(other_list),note("没有其他连接"),FALSE,FALSE,0);
+    std::set<std::string> seen;
+    for(auto &line:data["aps"]) {
+      auto f=fields(line);if(f.size()<4 || f[1].empty() || !seen.insert(f[1]).second)continue;
+      setting(wifi_list,f[1],"信号 "+f[2]+"%  "+f[3],button(f[0]=="*"?"已连接":"连接...",[this,f]{
+        bool ok=true;std::string password;
+        if(!f[3].empty() && f[3]!="--")password=ask("连接 "+f[1],"网络密码",true,&ok);
+        if(ok){require(safe(password),"密码不能包含换行。");action([f,password]{run({"nmcli","--ask","device","wifi","connect",f[1]},password+"\n",120);});}
+      }));
+    }
+    if(seen.empty())gtk_box_pack_start(GTK_BOX(wifi_list),note(!data["wireless"].get<bool>()?"未检测到无线网卡":!data["enabled"].get<bool>()?"无线网络已关闭":"未发现网络"),FALSE,FALSE,0);
+    for(auto list:{wired_list,wireless_devices,other_list,wifi_list})gtk_widget_show_all(list);
   };
-  gtk_box_pack_start(GTK_BOX(connections), button("刷新连接", refresh), FALSE,
-                     FALSE, 4);
-  gtk_box_pack_start(
-      GTK_BOX(connections),
-      button("编辑 IP、DNS 与 VPN…", [] { launch({"lp-connection-editor"}); }),
-      FALSE, FALSE, 4);
-  auto proxy = section(b, "应用代理");
+  auto refresh=[this,wifi,collect,render]{background(wifi,[collect]{return collect(true);},render);};
+  for(auto page:{wired,other}) {
+    gtk_box_pack_start(GTK_BOX(page),button("刷新",[this,page,collect,render]{background(page,[collect]{return collect(false);},render);}),FALSE,FALSE,0);
+    gtk_box_pack_start(GTK_BOX(page),button("编辑连接...",[]{launch({"lp-connection-editor"});}),FALSE,FALSE,0);
+  }
+  gtk_box_pack_start(GTK_BOX(wifi),button("刷新",refresh),FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(wifi),button("连接编辑器...",[]{launch({"lp-connection-editor"});}),FALSE,FALSE,0);
+  poll_page(wifi,8,refresh);
+  auto proxy = section(proxy_page, "应用代理");
   auto values = load(state() / "proxy.json");
   std::map<std::string, GtkWidget *> entries;
   for (auto [key, label] : std::vector<std::pair<std::string, std::string>>{
@@ -492,14 +421,15 @@ GtkWidget *App::network_page() {
              }),
       FALSE, FALSE, 4);
   setting(proxy, "生效范围",
-          "供重新登录后启动的应用使用。透明代理与 TUN 路由由对应程序管理。");
-  refresh();
-  return scroll(b);
+          "重新登录后生效。");
+  background(wifi,[collect]{return collect(false);},render);
+  return tabs({{"有线网络",scroll(wired)},{"Wi-Fi",scroll(wifi)},{"代理",scroll(proxy_page)},{"VPN 与其他",scroll(other)}});
 }
 GtkWidget *App::audio_page() {
   auto b = box(), devices = box();
   gtk_box_pack_start(GTK_BOX(b), devices, FALSE, FALSE, 0);
   auto refresh = [this, devices] {
+    if(page_dirty(devices) && !confirm("放弃未应用的声音更改？","刷新设备将重新读取当前设置。"))return;
     work(
         [] {
           J r;
@@ -517,7 +447,24 @@ GtkWidget *App::audio_page() {
                    {"sources", "麦克风与输入", "source"},
                    {"sink-inputs", "应用音量", "sink-input"}}) {
             auto g = section(devices, title);
-            GtkWidget *default_group=nullptr;
+            if(plural!="sink-inputs" && !data[plural].empty()) {
+              std::vector<std::pair<std::string,std::string>> choices;
+              for(auto &device:data[plural]) {
+                auto monitor=device.value("monitor_of_sink",J(nullptr));
+                if(plural=="sources" && !monitor.is_null() && monitor!=4294967295U)continue;
+                choices.push_back({device["name"],device.value("description",device.value("name",std::string("设备")))});
+              }
+              auto current=data.value("default-"+kind,"");
+              if(current.rfind("@DEFAULT_",0)==0)current=choices.size()==1?choices[0].first:"";
+              if(!choices.empty()) {
+              auto selector=box();auto selected=combo(choices,current);
+              setting(selector,plural=="sinks"?"输出设备":"输入设备","",selected);
+              gtk_box_pack_start(GTK_BOX(selector),save_button("保存默认设备",[this,kind,selected]{
+                auto name=choice(selected);require(!name.empty(),"请选择设备。");action([kind,name]{run({"pactl","set-default-"+kind,name});});
+              }),FALSE,FALSE,0);
+              gtk_box_pack_start(GTK_BOX(g),selector,FALSE,FALSE,0);
+              } else setting(g,"没有可用设备","");
+            }
             if (data[plural].empty())
               setting(g, "没有可用设备", "连接设备或启动播放后刷新。");
             for (auto &d : data[plural]) {
@@ -558,17 +505,7 @@ GtkWidget *App::audio_page() {
                            });
                          }),
                   FALSE, FALSE, 4);
-              if (plural != "sink-inputs") {
-                auto n = d["name"].get<std::string>();
-                auto selected=gtk_radio_button_new_with_label_from_widget(
-                    default_group?GTK_RADIO_BUTTON(default_group):nullptr,"默认设备");
-                default_group=selected;
-                gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(selected),data.value("default-"+kind,"")==n);
-                gtk_box_pack_start(GTK_BOX(inner),selected,FALSE,FALSE,0);
-                gtk_box_pack_start(GTK_BOX(inner),save_button("保存默认设备",[this,kind,n,selected]{
-                  if(active(selected))action([kind,n]{run({"pactl","set-default-"+kind,n});});
-                }),FALSE,FALSE,0);
-              }
+
             }
           }
           gtk_widget_show_all(devices);

@@ -68,9 +68,10 @@ files.add(Path(v['published_payload_recovery']['report']['file']))
 for name in ('desktop-final-elfs.json','desktop-validation.json','nvidia-module-validation.json','kernel-build-artifacts.json'):files.add(work/'logs'/name)
 files.update((work/'logs').glob('archive-guest-validation*.json'))
 if (work/'logs/factory-recipe.json').exists():files.add(work/'logs/factory-recipe.json')
-for name in ('old-image-cleanup.json','acceptance-matrix.json'):
+for name in ('old-image-cleanup.json','acceptance-matrix.json','portable-inputs.json'):
     if (work/'logs'/name).exists():files.add(work/'logs'/name)
 files.update(p for p in (work/'logs/archive-gui-validation').rglob('*') if p.is_file() and p.suffix in {'.png','.json','.log'})
+files.update(p for p in (work/'logs/desktop-ui-validation').rglob('*') if p.is_file() and p.suffix in {'.png','.json','.log'})
 files.update((work/'logs').glob('prepare-inputs*.log'))
 files.add(work/'tools/packages.json')
 for appliance in ('bv','bv2'):
@@ -88,6 +89,8 @@ for src,dest in [('release-readme.md','arclight-release-readme.md'),('rebranding
         '工程源码中的 `docs/hardware-validation/2026-10-30-tx-air-fa401km/resume-console-fix.md`')
     (dist/dest).write_text(text)
 subprocess.run(['bash',str(repo/'scripts/export-source.sh')],check=True,env={**os.environ,'ARCLIGHT_WORK':str(work),'SOURCE_EXPORT_NAME':release['release_source_archive']})
+physical=read(work/'logs/desktop-validation.json').get('hardware')
+graphics_verified=bool(physical and physical.get('wayland_egl_render') and physical.get('vulkan_render'))
 summary=dict(schema='arclight.release-validation.v1',release=release['id'],iso=iso.name,iso_bytes=iso.stat().st_size,iso_sha256=digest,archive_root=str(work),policy=v['policy'],
     runtime_packages=len(v['selected']),authenticated_apt_packages=auth['authenticated_binaries'],source_built_packages=sum(r['provenance']=='source-build' for r in v['selected']),
     recovered_payload_packages=sum('artifact_recovery' in r for r in v['selected']),fresh_source_built_packages=(len(v['derivation']['changed_packages']) if v.get('derivation') else sum(r['provenance']=='source-build' and 'artifact_recovery' not in r for r in v['selected'])),
@@ -95,7 +98,9 @@ summary=dict(schema='arclight.release-validation.v1',release=release['id'],iso=i
     derivation=v.get('derivation'),primary_kernel=primary,fallback_kernel=fallback,validation_complete=True,
     source_archive=release['source_archive'],release_source_archive=release['release_source_archive'],
     tests=[dict(phase=r['phase'],firmware=r['firmware'],kernel=r['kernel'],passed=True) for r in reports],
-    deferred=['Physical NVIDIA graphics, power, suspend and multiple monitors','Physical Secure Boot validation',
+    physical_validation=physical,
+    deferred=[('Physical NVIDIA fallback-kernel boot, power, suspend and external multiple monitors' if graphics_verified else
+               'Physical NVIDIA graphics, power, suspend and multiple monitors'),'Physical Secure Boot validation',
               'Physical retest of graphical VT recovery after lid-triggered suspend'])
 (dist/'arclight-release-validation.json').write_text(json.dumps(summary,indent=2)+'\n')
 names=[iso.name,iso.with_suffix('.grub-inputs.json').name,iso.with_suffix('.boot-layout.txt').name,'arclight-image-inputs.json','arclight-apt-authentication.json',

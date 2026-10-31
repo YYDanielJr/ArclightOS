@@ -34,12 +34,14 @@ J touchpad_settings();
 std::string touchpad_xml(const std::string &, const J &);
 void touchpad_save(const J &);
 void desktop_defaults();
+std::string hotkey_xml(const std::string &);
 std::string iso_upgrade(const J &, bool);
 void idle_start();
 GVariant *dbus(const char *, const std::string &, const char *, const char *,
                GVariant * = nullptr, int timeout = 120000);
 J unpack(GVariant *);
 J properties(const char *, const std::string &, const char *);
+std::string active_graphical_session();
 std::string privileged(const std::string &, const J & = J::object());
 bool is_pi();
 struct Raspi {

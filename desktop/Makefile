@@ -5,12 +5,14 @@ CPPFLAGS += $(shell pkg-config --cflags wayland-client)  $(shell pkg-config --cf
 CXXFLAGS += -std=c++17 -Wall -Wextra -Wformat=2 -pthread
 LDLIBS += $(shell pkg-config --libs gtk+-3.0 libxml-2.0 gio-unix-2.0) -ldl -lcrypt -pthread
 COMMON = native/common.o native/display.o native/policy.o native/input.o native/upgrade.o
-PROGRAMS = arclight-settings arclight-session arclight-system-policy arclight-file-tools arclight-screenshot arclight-archive arclight-resume-session
+PROGRAMS = arclight-settings arclight-session arclight-system-policy arclight-file-tools arclight-screenshot arclight-archive arclight-resume-session arclight-osd
 .PHONY: all clean check
 all: $(PROGRAMS)
-arclight-settings: native/app.o native/page_apply.o native/layout.o native/pages_devices.o native/pages_system.o native/pages_bluetooth.o native/pages_input.o native/pages_upgrade.o $(COMMON)
+arclight-settings: native/app.o native/page_apply.o native/layout.o native/pages_devices.o native/pages_system.o native/pages_bluetooth.o native/pages_input.o native/pages_upgrade.o native/pages_storage.o native/storage.o $(COMMON)
 	$(CXX) $(LDFLAGS) -Wl,--export-dynamic -o $@ $^ $(LDLIBS)
 arclight-session: native/session_main.o $(COMMON)
+	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
+arclight-osd: native/osd.o $(COMMON)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
 arclight-system-policy: native/policy_main.o $(COMMON)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS)
@@ -30,10 +32,11 @@ arclight-screenshot: native/screenshot.o native/screenshot_windows.o $(PROTOCOL_
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -lwayland-client -lX11
 arclight-archive: native/archive_app.o native/archive_progress_view.o native/archive_create_view.o native/archive.o native/archive_io.o native/archive_sdk.o $(COMMON)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -larchive
-native-tests: native/tests.o native/archive.o native/archive_io.o native/archive_sdk.o $(COMMON)
+native-tests: native/storage.o native/tests.o native/archive.o native/archive_io.o native/archive_sdk.o $(COMMON)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -larchive
 archive-tests: native/archive_advanced_tests.o native/archive.o native/archive_io.o native/archive_sdk.o $(COMMON)
 	$(CXX) $(LDFLAGS) -o $@ $^ $(LDLIBS) -larchive
+native/storage.o native/pages_storage.o: native/storage.hpp
 native/archive.o native/archive_app.o native/archive_progress_view.o native/archive_create_view.o native/archive_io.o native/archive_sdk.o native/archive_advanced_tests.o native/tests.o: native/archive.hpp
 native/archive_io.o native/archive_sdk.o native/archive_advanced_tests.o: native/archive_io.hpp
 native/archive_app.o native/archive_create_view.o: native/archive_create_view.hpp
