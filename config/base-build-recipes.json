@@ -31,6 +31,11 @@
       "reason": "Build the ordinary amd64 fallback with refreshed Debian control checksums; omit unused cloud and RT flavours",
       "profiles": "pkg.linux.nokerneldbginfo,pkg.linux.nokerneldbg,pkg.linux.mintools,pkg.linux.nosource,nodoc,noudeb",
       "space_gib": 15,
+      "binary_renames": {
+        "linux-headers-6.12.113+deb13-common": "linux-headers-6.12.113+deb13.1-common",
+        "linux-headers-6.12.113+deb13-amd64": "linux-headers-6.12.113+deb13.1-amd64",
+        "linux-kbuild-6.12.113+deb13": "linux-kbuild-6.12.113+deb13.1"
+      },
       "jobs": 4,
       "priority": 110
     },
@@ -54,9 +59,9 @@
     },
     "rpi-calamares-settings": {
       "original_version": "13.0.13+rpt3-1",
-      "version": "13.0.13+rpt3-4+arclight1",
+      "version": "13.0.13+rpt3-5+arclight1",
       "transform": "pi_offline_installer",
-      "recipe_revision": 4,
+      "recipe_revision": 5,
       "reason": "ArclightOS installer identity with offline installation and removal safeguards retained",
       "priority": 117
     },

@@ -1,0 +1,11 @@
+{
+  "schema": "arclight.kernel-patch-series.v1",
+  "series": ["7.3"],
+  "patches": [
+    {
+      "id": "bore",
+      "file": "0001-bore-mainline.patch",
+      "sha256": "a28dfea2ac34b02a23b2e04a47d4d05aabe970b5dfcfbf6b824dc21d8c15734c"
+    }
+  ]
+}

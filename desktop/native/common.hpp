@@ -37,6 +37,7 @@ void desktop_defaults();
 void labwc_reconfigure();
 std::string hotkey_xml(const std::string &);
 std::string iso_upgrade(const J &, bool);
+void extract_update_bundle(const fs::path &, const fs::path &, uint64_t);
 void idle_start();
 GVariant *dbus(const char *, const std::string &, const char *, const char *,
                GVariant * = nullptr, int timeout = 120000);

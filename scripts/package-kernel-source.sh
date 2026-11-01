@@ -6,6 +6,8 @@ work=${ARCLIGHT_WORK:-${YYDANIEL_WORK:-$(dirname "$repo")}}
 version=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kernel"]["version"])' "$repo/config/sources.lock.json")
 release=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kernel"]["release"])' "$repo/config/sources.lock.json")
 debversion=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kernel"]["debian_version"])' "$repo/config/sources.lock.json")
+epoch=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kernel"].get("source_date_epoch",1793318400))' "$repo/config/sources.lock.json")
+timestamp=$(date -u -d "@$epoch" '+%Y-%m-%d %H:%M:%S +0000')
 stage=$work/build/corresponding-source-$version
 test ! -e "$work/dist/linux-source-$release.tar.xz"
 mkdir -p "$stage"
@@ -15,23 +17,26 @@ if [[ ! -d $stage/linux-$version ]]; then
         tar -xJf "$ASCALON_SOURCE_ARCHIVE" -C "$stage"
     else
         tar -xJf "$work/sources/linux-$version.tar.xz" -C "$stage"
-        git -C "$stage/linux-$version" apply "$work/sources/0001-bore-mainline.patch"
+        python3 "$repo/scripts/apply-kernel-patches.py" "$stage/linux-$version" --report "$work/logs/kernel-source-patch-application.json"
     fi
 fi
-cp "$work/build/linux-$version/.config" "$stage/linux-$version/.config"
+config=${ASCALON_CONFIG:-$work/build/linux-$version/.config}
+[[ -f $config ]] || config="$work/build/obj-$release/.config"
+cp "$config" "$stage/linux-$version/.config"
 cp "$repo/config/sources.lock.json" "$stage/linux-$version/arclight-sources.lock.json"
+python3 "$repo/scripts/install-kernel-notes.py" "$stage/linux-$version"
 rm -f "$stage/linux-$version/arclight-build-recipe.sh" "$stage/linux-$version/yydaniel-sources.lock.json" "$stage/linux-$version/build-yydaniel.sh"
 cat > "$stage/linux-$version/build-ascalon.sh" <<EOF
 #!/bin/bash
 set -euo pipefail
 cd "\$(dirname "\$0")"
 export KBUILD_BUILD_USER=arclight KBUILD_BUILD_HOST=arclight-builder
-export KBUILD_BUILD_TIMESTAMP='2026-10-30 00:00:00 +0000' SOURCE_DATE_EPOCH=1793318400
+export KBUILD_BUILD_TIMESTAMP='$timestamp' SOURCE_DATE_EPOCH=$epoch
 export KDEB_PKGVERSION='$debversion' KDEB_SOURCENAME=ascalon-linux KDEB_COMPRESS=zstd
 make olddefconfig
 make -j"\${JOBS:-3}" bindeb-pkg
 EOF
 chmod 755 "$stage/linux-$version/build-ascalon.sh"
-tar --sort=name --mtime='2026-10-30 00:00:00 UTC' --owner=0 --group=0 --numeric-owner \
- -c -C "$stage" "linux-$version" | xz -T2 -3 > "$work/dist/linux-source-$release.tar.xz"
+tar --sort=name --mtime="@$epoch" --owner=0 --group=0 --numeric-owner \
+ --exclude='.arclight-patchset.json' -c -C "$stage" "linux-$version" | xz -T2 -3 > "$work/dist/linux-source-$release.tar.xz"
 (cd "$work/dist"; sha256sum "linux-source-$release.tar.xz" > "linux-source-$release.tar.xz.sha256")

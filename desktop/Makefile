@@ -3,7 +3,7 @@ VERSION := $(shell dpkg-parsechangelog -S Version)
 CPPFLAGS += -DARCLIGHT_DESKTOP_VERSION=\"$(VERSION)\"
 CPPFLAGS += $(shell pkg-config --cflags wayland-client)  $(shell pkg-config --cflags gtk+-3.0 libxml-2.0 gio-unix-2.0)
 CXXFLAGS += -std=c++17 -Wall -Wextra -Wformat=2 -pthread
-LDLIBS += $(shell pkg-config --libs gtk+-3.0 libxml-2.0 gio-unix-2.0) -ldl -lcrypt -pthread
+LDLIBS += $(shell pkg-config --libs gtk+-3.0 libxml-2.0 gio-unix-2.0) -ldl -lcrypt -larchive -pthread
 COMMON = native/common.o native/display.o native/policy.o native/input.o native/upgrade.o
 PROGRAMS = arclight-settings arclight-session arclight-system-policy arclight-file-tools arclight-screenshot arclight-archive arclight-resume-session arclight-osd
 .PHONY: all clean check

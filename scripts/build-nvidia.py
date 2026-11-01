@@ -13,6 +13,7 @@ import re
 import shutil
 import subprocess
 import tarfile
+from source_archive import archive_source_tree
 
 REPO = Path(__file__).resolve().parents[1]
 os.environ['LC_ALL'] = 'C'
@@ -25,6 +26,9 @@ BUILD = WORK / 'build/nvidia'
 DIST = WORK / 'dist'
 for path in (CACHE, BUILD, DIST):
     path.mkdir(parents=True, exist_ok=True)
+source_output = DIST / f'arclight-nvidia-open-source-{VERSION}.tar.xz'
+if source_output.exists() or source_output.with_name(source_output.name + '.sha256').exists():
+    raise SystemExit('Use a new workspace; refusing to rebuild frozen NVIDIA source/artifacts')
 
 
 def run(*args, **kwargs):
@@ -264,4 +268,6 @@ package(meta, 'arclight-nvidia-driver',
         f'arclight-nvidia-userspace (= {DEBVERSION}), arclight-nvidia-open-dkms (= {DEBVERSION})',
         f'Matching NVIDIA {VERSION} driver stack for ArclightOS', 'yydaniel-nvidia-driver',
         license_path=REPO / 'LICENSE', section='contrib/x11')
+archive_source_tree(srcdir, source_output,
+                    f'arclight-nvidia-open-{VERSION}')
 print(f'Created {VERSION} DEBs; userspace and GSP firmware are proprietary redistributable inputs.')

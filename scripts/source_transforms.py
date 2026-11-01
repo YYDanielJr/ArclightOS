@@ -144,6 +144,37 @@ exit 0
             break
     else:raise ValueError('No installer Depends field')
     control.write_text('\n'.join(lines)+'\n')
+    # The cold-source path must include the same branding and Qt6 fixes that
+    # were previously only present in the retained-release installer builder.
+    for name in ['calamares/branding/pios/branding.desc', 'calamares/branding/pios/show.qml',
+                 'helpers/calamares-sources-final', 'conf/calamares-desktop-icon.desktop',
+                 'calamares-install-pios.desktop', 'add-calamares-desktop-icon']:
+        path = tree / name
+        text = path.read_text().replace('Astgenne OS', 'ArclightOS').replace('Astgenne', 'ArclightOS').replace('astgenne', 'arclight')
+        text = text.replace('Welcome to Debian GNU/Linux.', 'Welcome to ArclightOS.')
+        text = text.replace('Install Raspberry Pi OS', 'Install ArclightOS').replace('Installer for Raspberry Pi OS Live', 'Installer for ArclightOS Live')
+        if name == 'calamares-install-pios.desktop':
+            text = text.replace('Name=Install ArclightOS\n', 'Name=Install ArclightOS\nName[zh_CN]=安装弧光系统\n')
+        if name.endswith('branding.desc'):
+            text = text.replace('"raspberry-pi-logo.png"', '"arclightos.png"').replace('"raspberry-pi-logo-small.png"', '"arclightos.png"')
+        path.write_text(text)
+    import gi
+    gi.require_version('GdkPixbuf', '2.0')
+    from gi.repository import GdkPixbuf
+    repo = Path(__file__).resolve().parents[1]
+    branding_dir = tree / 'calamares/branding/pios'
+    for src, dest, width, height in [('arclightos.svg', 'arclightos.png', 256, 256),
+                                   ('installer-slide.svg', 'slide1.png', 1200, 640)]:
+        pixbuf = GdkPixbuf.Pixbuf.new_from_file_at_scale(str(repo / 'branding' / src), width, height, True)
+        pixbuf.savev(str(branding_dir / dest), 'png', [], [])
+        shutil.copy2(repo / 'branding' / src, branding_dir / src)
+    shutil.copy2(branding_dir / 'arclightos.png', tree / 'artwork/install-pios.png')
+    text = control.read_text().replace('Description: Raspberry Pi OS theme and settings for the Calamares Installer',
+        'Description: ArclightOS theme and settings for the Calamares Installer')
+    text = text.replace('qml-module-qtquick-window2', 'qml6-module-qtquick-window').replace('qml-module-qtquick2', 'qml6-module-qtquick')
+    if 'qml6-module-qtquick-window' not in text or 'qml-module-' in text:
+        raise ValueError('Review changed installer QML dependencies')
+    control.write_text(text)
     subprocess.run(['dpkg-source','--commit','.','arclight-offline-install.patch'],cwd=tree,
                    env={**__import__('os').environ,'EDITOR':'true'},check=True)
 

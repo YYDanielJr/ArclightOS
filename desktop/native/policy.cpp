@@ -139,6 +139,8 @@ void validate_policy(const std::string &a, const J &d) {
       {"apt-refresh", {}},
       {"iso-upgrade-check", {"iso", "sha256"}},
       {"iso-upgrade", {"iso", "sha256", "plan"}},
+      {"bundle-upgrade-check", {"bundle", "sha256"}},
+      {"bundle-upgrade", {"bundle", "sha256", "plan"}},
       {"firewall", {"enabled"}},
       {"firewall-rule", {"port", "protocol", "allow"}},
       {"raspi", {"option", "value"}},
@@ -167,11 +169,11 @@ void validate_policy(const std::string &a, const J &d) {
   };
   if (a == "install")
     require(components.count(str("component")), "未知的软件组件。");
-  if (a == "iso-upgrade-check" || a == "iso-upgrade") {
-    auto p = str("iso");
-    require(!p.empty() && p[0]=='/' && p.size()<4096 && safe(p), "ISO 路径无效。");
+  if (a == "iso-upgrade-check" || a == "iso-upgrade" || a == "bundle-upgrade-check" || a == "bundle-upgrade") {
+    auto p = str(a.rfind("bundle-",0)==0?"bundle":"iso");
+    require(!p.empty() && p[0]=='/' && p.size()<4096 && safe(p), "升级文件路径无效。");
     require(std::regex_match(str("sha256"),std::regex("[0-9a-f]{64}")), "请输入可信发布渠道提供的完整 SHA256。");
-    if(a=="iso-upgrade") require(std::regex_match(str("plan"),std::regex("[0-9a-f]{64}")), "升级计划无效。");
+    if(a=="iso-upgrade" || a=="bundle-upgrade") require(std::regex_match(str("plan"),std::regex("[0-9a-f]{64}")), "升级计划无效。");
   }
   if (a == "service") {
     auto n = str("name");
@@ -256,8 +258,8 @@ static void save(const fs::path &p, const std::string &text) {
 void apply_policy(const std::string &a, const J &d) {
   validate_policy(a, d);
   require(geteuid() == 0, "此操作需要管理员认证。");
-  if(a=="iso-upgrade-check" || a=="iso-upgrade") {
-    std::cout << iso_upgrade(d,a=="iso-upgrade") << std::endl;
+  if(a=="iso-upgrade-check" || a=="iso-upgrade" || a=="bundle-upgrade-check" || a=="bundle-upgrade") {
+    std::cout << iso_upgrade(d,a=="iso-upgrade" || a=="bundle-upgrade") << std::endl;
     return;
   }
   if (a == "install") {

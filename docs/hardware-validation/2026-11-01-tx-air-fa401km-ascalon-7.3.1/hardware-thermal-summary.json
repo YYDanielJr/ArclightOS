@@ -1,0 +1,47 @@
+{
+  "kernel": "7.3.1-ascalonkernel",
+  "status": "passed-workloads",
+  "temperature_policy": "hardware",
+  "normal_software_temperature_cutoffs_enabled": false,
+  "firmware_or_kernel_thermal_controls_modified": false,
+  "vendor_cpu_tjmax_c": 100,
+  "phases": [
+    {
+      "phase": "cpu-thermal-4",
+      "workers": 4,
+      "seconds": 30.69,
+      "cpu_max_c": 77.125,
+      "cpu0_cppc_equivalent_mhz_median": 4945.5,
+      "status": "passed",
+      "cppc_feedback_samples": 30
+    },
+    {
+      "phase": "cpu-thermal-8",
+      "workers": 8,
+      "seconds": 30.23,
+      "cpu_max_c": 90.625,
+      "cpu0_cppc_equivalent_mhz_median": 4856.4,
+      "status": "passed",
+      "cppc_feedback_samples": 30
+    },
+    {
+      "phase": "cpu-thermal-16",
+      "workers": 16,
+      "seconds": 30.36,
+      "cpu_max_c": 93.0,
+      "cpu0_cppc_equivalent_mhz_median": 4831.5,
+      "status": "passed",
+      "cppc_feedback_samples": 30
+    }
+  ],
+  "max_cpu_c": 93.0,
+  "new_kernel_faults": [],
+  "workload_issues": [],
+  "hardware_failure_events": [],
+  "threshold_reached_95c": false,
+  "interpretation": "CPPC feedback shows native frequency/performance adjustment under increasing load; no failed heat regulation observed. Temperature stayed below 95 C, so this does not isolate thermal throttling from power/current limits or verify a 95 C thermal wall.",
+  "raw_report_sha256": "f29bc06042c6d393d9d81a4ffc34c5cfe57e396502014ec49b8706992e08945d",
+  "script_sha256": "08907bda4e4501c1cc19338768f33799dcceb7428b04ae8434f954bfc099dec8",
+  "tool_regression_checks": 23,
+  "full_hardware_acceptance": false
+}

@@ -1,3 +1,13 @@
+arclight-desktop (0.10.0) unstable; urgency=medium
+
+  * Replace the primary ISO update flow with verified compressed bundles for
+    locally built project packages; leave Debian/Pi updates to signed APT.
+  * Extract selected update payloads with bounded native libarchive parsing,
+    reject links, traversal, duplicates and stale transaction plans.
+  * Preserve the legacy ISO protocol for migration from earlier installations.
+
+ -- YYDaniel <yydaniel@localhost>  Sun, 01 Nov 2026 16:00:00 +0800
+
 arclight-desktop (0.9.2) unstable; urgency=high
 
   * Reload only the current user's compositor through a pinned pidfd,

@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""Create a separate, non-bootable offline update ISO without rebuilding a rootfs.
+"""LEGACY: use build-upgrade-bundle.py for all new update releases.
+
+Create a separate, non-bootable offline update ISO without rebuilding a rootfs.
 
 DEBs in --pool must come from recorded local builds or authenticated APT downloads.
 --evidence contains the build logs, signed APT metadata, hashes and project source.

@@ -22,7 +22,8 @@ for packed_name,lock_name,target_name in (
 names={'cryptsetup','linux','linux-signed-amd64','rpi-calamares-settings','gtk2-engines-pixflat','gtk+3.0','grub2'}
 items={s['source']:s for plan in reversed(plans) for s in plan['packages'] if s['source'] in names}
 assert set(items)==names
-subset.write_text(json.dumps(dict(packages=list(items.values())),indent=2)+'\n')
+subset.write_text(json.dumps(dict(packages=list(items.values()),source_count=len(items),
+ bytes=sum(p['bytes'] for p in items.values())),indent=2)+'\n')
 PY
 python3 "$repo/scripts/fetch-source-plan.py" "$work/mixed-build/local-source-plan.json" "$root/sources" --workers 3
 python3 "$repo/scripts/derive-source.py" "$root" --only cryptsetup linux linux-signed-amd64 rpi-calamares-settings gtk2-engines-pixflat gtk+3.0

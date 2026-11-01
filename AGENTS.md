@@ -155,7 +155,7 @@ UEFI 已新增 ArclightOS 入口，旧入口与原有相对顺序保留，Window
 
 ## 5. 内核长期维护流程
 
-每次更新单独保留“上游版本变化”和“本地补丁变化”，不要在现有已打补丁的构建树中反复覆盖源码。`build-kernel.sh` 使用 `.yydaniel-bore-applied` 标记复用构建树；锁文件或补丁改变时必须换干净目录，不能仅删标记后重打补丁。
+每次更新单独保留“上游版本变化”和“本地补丁变化”，不要在现有已打补丁的构建树中反复覆盖源码。`build-kernel.sh` 和 `update-kernel.py` 使用 `.arclight-patchset.json` 记录补丁输入和结果文件哈希；旧 BORE 标记不能代替验证。锁文件或补丁改变时必须换干净目录，不能仅删标记后重打补丁。
 
 1. 查询上游正式发布、安全修复与 NVIDIA 支持情况；选择 mainline/stable 或 Debian backports 的明确版本，固定归档哈希、签名验证结果、补丁 commit 和许可证。不要将移动分支 HEAD 当成可重复输入。
 2. 上游原始源码保持可核验。本地补丁尽量少；每个补丁记录目的、来源、适用版本、移植差异与删除条件。BORE 的转换代码针对具体上游上下文，不能假定跨版本仍语义正确。补丁无法干净应用、出现 fuzz/reject 或配置符号变化必须人工检查，不静默跳过。
@@ -281,3 +281,66 @@ Get-FileHash -Algorithm SHA256 -LiteralPath dist/astgenne-os-trixie-amd64.iso
 用户上传后重启，labwc/Wayland 已运行，但面板、pcmanfm 和两个 Pi 守护进程未启动。已复现 `labwc --reconfigure` 的短命同名进程使官方 `lwrespawn` 两次 PID 比较不同而提前退出；统一改用经 UID/可执行文件校验并以 pidfd 固定目标的 SIGHUP。已在原会话恢复桌面并安装 0.9.2，9 个 ELF 与最终 DEB 一致，APT 检查通过；备份 `/var/backups/arclight-desktop-0.9.2-20261101/`。没有重启主机或图形会话。
 
 干净构建通过 92 项核心、119 项压缩和 17 项恢复检查。最终 DEB 在私有 PID/Wayland 中通过 3 个冷会话及真实登录助手、30 次刷新、6 个监管测试组件启动和 3 次子进程重启；实体当前会话重载通过，**补丁后的实体再次冷启动仍未测**。详见 `docs/desktop-0.9.2.md`。本轮只交付独立桌面热修复，不覆盖用户已上传的 0.9.1 ISO、冻结源码或原清单；最近完整镜像仍为 0.9.1，含有上述启动竞态。
+
+## 2026-11-01 ISO 总入口与内核维护工具
+
+新增 Python 总入口 `scripts/build-iso.py`，面向全新工作区：冻结独立源码副本、构建项目/七个本地基础源码、双内核 NVIDIA 隔离编译、刷新并认证 APT 输入、断网装配 BIOS/UEFI 候选 ISO。逐阶段日志/哈希恢复，不复用旧全量重编译队列或历史私有工作区，不把装配成功记为真实启动/安装通过。使用及构建机要求见 `docs/iso-builder.md`。当前宿主缺少 sbuild/schroot/xorriso/libarchive-dev，约 68 GiB 空间低于默认冷构建预算；本轮没有安装这些依赖或执行完整冷构建，也没有生成新 ISO。
+
+冷构建路径补齐 Qt6/剪贴板等明确运行时输入、回退 headers 的 ABI 名称映射，以及此前只在历史恢复安装器构建器中的品牌和 Qt6 修订。安装器源码版本递增为 `13.0.13+rpt3-5+arclight1`，尚未构建/安装这个新修订；历史 `-4`、已发布 ISO、冻结输入和清单保持原样。
+
+内核来源建议见 `docs/kernel-upstream-strategy.md`：当前 stable 主力与未来独立 upstream longterm LTS，Debian 集成/已审核补丁单独维护，backports 同系列先做对照，不把下一系列主线整体合入旧 LTS。本轮没有修改当前内核/ABI/配置或启动默认值。
+
+新增 `scripts/kernel-stress.py` 与 `docs/kernel-stress.md`：默认仅输出计划，显式 run 才执行受限 CPU/内存/IPC/普通文件 I/O；温度/资源/新内核错误监控、进程组终止、私有报告，网络/GPU 明确选择，睡眠/重启另行安排。工具回归及真实 4 MiB fio CRC32C 写回检查通过，另采集只读基线；不计为内核压力、显卡、睡眠或完整硬件验收。原始基线位于忽略的 `.local/kernel-stress/20261101-tool-baseline/`。
+
+## 2026-11-01 内核修改说明与源码随附记录
+
+新增 `kernel/UPSTREAM-CHANGES.md`、实际转换后的 BORE 补丁副本、发布配置快照和完整配置审计；当前工程没有展开的完整 Linux 源码，`kernel/README.md` 指明构建树与发行对应源码位置。原始 BORE 输入 hash 已重新核验，14 文件的发布源码副本通过逆向补丁检查；统计为新增 947/删除 11 行。已发布配置与本机配置相同，seed→发布的 1208 项差异含跨版本/工具链变化，不能全部归为手工修改。没有进行完整 pristine 全树逐文件比较。
+
+`scripts/install-kernel-notes.py` 为后续新建源码/构建树携带 `ASCALON-CHANGES.md` 与 `arclight-maintenance/`，在内核/BORE 输入变化而说明未更新时拒绝携带过时说明。三个构建/源码导出入口已接入，只增加维护文档，不改内核实现、配置或 ABI；旧发布归档未修改。核验原始记录在 `.local/kernel-audit-20261101/`。GitHub 托管 APT 的布局、签名和容量限制见 `docs/github-apt.md`；本轮没有部署远端仓库或添加本机 APT 源。
+
+
+## 2026-11-01 自动内核更新与压缩包升级
+
+当前源码锁定 Linux **7.3.1 / 7.3.1-ascalonkernel / 7.3.1-1+arclight1**，桌面源码 **0.10.0**。`scripts/update-kernel.py` 从签名验证的干净上游应用声明式 `kernel/patches/series.json`，本次 BORE 无需改写、配置无符号差异。96,081 个上游文件全量内容比较通过，14 个实现文件差异均属声明补丁；五个 NVIDIA 615.78.08 模块干净构建通过。详见 `docs/kernel-automatic-updates.md`、`docs/kernel-7.3.1.md` 与 `kernel/UPSTREAM-CHANGES.md`。
+
+新完整内核构建预留至少 60 GiB，默认 3 任务；成功归档源码、配方、哈希及日志后清理对象文件和未发布 debug DEB。不能删除唯一可启动的旧 ABI；安装、单次试启动和实体启动分别留证。此段写入冻结输入时尚未安装新包，不能据此宣称实体 7.3.1 已通过。
+
+新日常更新入口为 `scripts/build-upgrade-bundle.py`，生成 TAR.XZ，原生设置读取 TAR.XZ/TAR.ZST。只收录项目/本地构建包与明确标注的 NVIDIA 厂商载荷；Debian/Pi 原生包仍走正常认证 APT。源码覆盖、buildinfo、逐包/整包哈希、离线依赖计划、无删除/无降级和内核回退检查不能取消。旧 ISO 升级入口脚本只保留兼容，新发布默认压缩包，说明在 `docs/offline-upgrade.md`、`docs/desktop-0.10.0.md`。旧完整 ISO 和冻结清单未覆盖。
+
+
+### 2026-11-01 本机实际压缩包升级完成
+
+已实际安装桌面 **0.10.0**、AscalonKernel **7.3.1-ascalonkernel / 7.3.1-1+arclight1** 的 image/headers 与三个元包。通过新 TAR.XZ 原生后端升级七包，无删除/降级；错误哈希、过期计划拒绝检查通过。五个新 ABI NVIDIA DKMS 模块真实构建/安装，旧 7.3.0 和 Debian 6.12.113 及其模块保留。image/config、九个 ELF 与 DEB 哈希相同，headers、模块索引权限及八项 initramfs/内建启动驱动检查通过；dpkg/APT 正常。
+
+**当前运行仍为 7.3.0-ascalonkernel，未重启/挂起。** `/etc/default/grub.d/99-arclight-update-trial.cfg` 暂保留它为永久默认，原 90 配置仍在；GRUB next_entry 仅安排新 7.3.1 的单次试启动。实体新内核启动/图形/睡眠/性能尚未验收，不能删除 7.3.0 或先设新内核为永久默认。备份为 `/var/backups/arclight-kernel-update-20261101-163942/`。记录见 `docs/update-20261101.md`、`docs/kernel-7.3.1.md`。
+
+更新包含 34 个本地组件、对应源码及构建证据，原生 APT 包为零；Debian/Pi 仍通过正常认证 APT 更新。输入工程源码、已生成压缩包和旧完整 ISO 均冻结不覆盖；安装后的最终维护源码另导出 release 归档。本轮没有推送或上传 Release。
+
+
+## 2026-11-01 7.3.1 实体启动与压力短测
+
+用户已重启，实际运行 **7.3.1-ascalonkernel**，NVIDIA 615.78.08 加载与 NVML 可用。首轮短测 CPU/内存通过，IPC 固定 2+2+2 并发及辅助进程超过低负载范围，触发 90°C 温度保护，后续未执行；失败报告保留。已修正 `kernel-stress.py`，IPC 三项串行共享时间预算，负载/子进程继承档位 CPU 亲和性；19 项工具回归通过。
+
+修正后 2 核/256 MiB 内存/256 MiB 普通文件复测七阶段全部通过，CPU 最高 69.5°C、NVMe 最高 56.85°C，无新增内核故障，CRC32C 两轮通过；用户反馈桌面正常，无黑屏、明显卡顿和键鼠失灵。结果仅覆盖短测，不代表全内存、全核、GPU、长时间或睡眠验收。未修改 7.3.0 永久默认/回退配置，也未主动睡眠或重启。
+
+证据见 `docs/hardware-validation/2026-11-01-tx-air-fa401km-ascalon-7.3.1/validation.md`；原始数据 `.local/kernel-stress/20261101-7.3.1-smoke-01/`（中止）与 `smoke-02/`（通过）。stress-ng 与三依赖为签名 APT 解包工具，未安装到系统；后续可用 `.local/kernel-stress-tools/20261101/run-stress.sh` 调用。未测项继续保留，不因用户启动成功就删除可用旧内核或改为永久默认。
+
+
+### 本机压力测试温度参数
+
+用户指出笔记本厂商 Windows 温度墙为 95°C；实测 CPU 为 Ryzen AI 7 H 350，AMD 官方 Tjmax 为 100°C。后续本机压力测试显式使用 `--max-temp-c 95`，NVMe 75°C、NVIDIA 显式监控 85°C 保留。90°C 是原短测工具的保守中止线，达到该线不能据此认定内核不稳定。已完成两轮仍按实际 90°C 条件留证，95°C 条件尚未执行。只改变后续用户态测试中止参数，不修改硬件/内核温控；本机参数保存在 `.local/kernel-stress-tools/20261101/machine-limits.json`。
+
+
+### 用户后续覆盖：取消本机测试软件温度线
+
+用户要求更激进、依赖原厂自动降频，覆盖此前 95°C 脚本中止建议。本机后续用 `--temperature-policy hardware --hardware-cpu-tjmax-c 100`；常规 CPU/NVMe/独显温度中止线不生效，原厂/内核温控保留。CPU 100°C 仅作厂家规格的失控观察参考：持续越界并继续升温且 CPPC 反馈没有相应下降时才因热响应异常停止；不是普通的 100°C 一到就停。内核故障、资源耗尽预防及人工停止处理保留。`.local/kernel-stress-tools/20261101/run-stress.sh` 已对这台 H 350 默认启用该模式，公共工具面向未知硬件仍保留显式选择。
+
+23 项工具回归通过，随后 4→8→16 线程各 30 秒 matrixprod CPU 阶梯通过；最高 93°C，超过旧 90°C 线仍继续，没有新增内核故障。CPU0 CPPC 等效频率中位数约 4.946→4.856→4.832 GHz。观察到原生调频响应，未发现温度失控；本轮没达到 95°C，不能据此宣称已单独验证温度墙或紧急热关机。尚未开展长期全核、GPU 或挂起测试。原始目录 `.local/kernel-stress/20261101-7.3.1-hardware-thermal-01/`，汇总见同一实体报告的 `hardware-thermal-summary.json`。没有调整 BIOS/EC、Linux 温控、电压/频率策略、永久默认内核或重启。
+
+### 2026-11-01 原厂温控模式下的 40 分钟标准压力测试
+
+用户授权继续；17:46:31–18:26:40 实际完成 **2409.49 秒** standard，16 个 CPU 计算任务、单实例 4 GiB 内存及 2 GiB 普通文件。CPU、内存、串行的 switch/futex/pipe、顺序 CRC32C、混合负载七阶段全部通过，所有负载退出码为零；stress-ng 无失败/跳过，两轮 fio 各写/读 2 GiB，合计 8 GiB，错误为零。随机文件 I/O 实际约 24.6 秒，与混合阶段开始重叠，不是持续十分钟存储压力。
+
+普通软件温度线关闭，原厂/内核温控未改；CPU 最高 **95.5°C**、NVMe 已暴露传感器最高 **61.85°C**，最少可用内存 22077 MiB。持续 CPU/混合阶段温度约 95.4°C，无热响应失常事件；不能据此宣称独立验证紧急热关机或确定唯一限频原因。全程内核日志可读，无新增故障，taint 维持 12288；结束后确认无残留负载、dpkg 审计为空、失败系统单元为空。用户在混合阶段期间反馈桌面正常，无黑屏、明显卡顿或键鼠失灵。
+
+原始记录 `.local/kernel-stress/20261101-7.3.1-standard-hardware-01/`，冻结脚本/控制器 `.local/kernel-stress-tools/20261101/standard-01/`；脱敏报告为同一实体目录的 `standard-summary.json` 与 `validation.md`。CRC/身份/退出核验后，仅清理了本轮 2 GiB 临时测试文件，全部证据保留。未修改内核、软件包、永久启动默认值或旧回退配置，没有睡眠/重启。完整物理内存、多小时浸泡、持续 NVMe、7.3.1 的 NVIDIA 图形/显存压力及挂起/恢复仍未验收。

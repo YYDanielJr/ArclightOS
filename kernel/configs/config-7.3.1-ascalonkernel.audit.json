@@ -1,0 +1,26 @@
+{
+  "schema": "arclight.kernel-update-config.v1",
+  "previous_kernel": {
+    "version": "7.3",
+    "release": "7.3.0-ascalonkernel",
+    "debian_version": "7.3-4+arclight1",
+    "meta_debian_version": "7.3-4+arclight1",
+    "filename": "linux-7.3.tar.xz",
+    "url": "https://mirrors.nju.edu.cn/kernel.org/linux/kernel/v7.x/linux-7.3.tar.xz",
+    "upstream": "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.tar.xz",
+    "sha256": "87363c24f10e06321eb362765521094e94471f6bff8bce2d6b3e40f39f004953"
+  },
+  "target_kernel": {
+    "version": "7.3.1",
+    "release": "7.3.1-ascalonkernel",
+    "debian_version": "7.3.1-1+arclight1",
+    "meta_debian_version": "7.3.1-1+arclight1",
+    "filename": "linux-7.3.1.tar.xz",
+    "url": "https://mirrors.ustc.edu.cn/kernel.org/linux/kernel/v7.x/linux-7.3.1.tar.xz",
+    "upstream": "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.1.tar.xz",
+    "sha256": "fa595aad93734f829c963c2a90ef7c3673224fd7fdae7b49406e397cde2de231",
+    "source_date_epoch": 1793491200
+  },
+  "changes": [],
+  "config_sha256": "81c1481af8585bb1f5ab53c4c420d25b340efb4230c92aee65a1200aedbaf7e6"
+}

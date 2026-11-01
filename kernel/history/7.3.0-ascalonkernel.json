@@ -1,0 +1,106 @@
+{
+  "schema": "arclight.kernel-maintenance.v1",
+  "date": "2026-11-01",
+  "kernel": {
+    "version": "7.3",
+    "release": "7.3.0-ascalonkernel",
+    "debian_version": "7.3-4+arclight1",
+    "sha256": "87363c24f10e06321eb362765521094e94471f6bff8bce2d6b3e40f39f004953",
+    "upstream": "https://cdn.kernel.org/pub/linux/kernel/v7.x/linux-7.3.tar.xz"
+  },
+  "bore": {
+    "commit": "542948508e7098b6482d8269bc1097733dd27399",
+    "source_url": "https://raw.githubusercontent.com/CachyOS/kernel-patches/542948508e7098b6482d8269bc1097733dd27399/7.3/sched/0001-bore-cachy.patch",
+    "source_sha256": "0682dfd0dc074e847fa8f254f7487b811b6f01450bfcfc7de31cbee28c15648f",
+    "ported_sha256": "a28dfea2ac34b02a23b2e04a47d4d05aabe970b5dfcfbf6b824dc21d8c15734c",
+    "implementation_version": "7.0.0",
+    "files_changed": 14,
+    "insertions": 947,
+    "deletions": 11,
+    "reverse_check_passed": true,
+    "published_files": [
+      {
+        "file": "include/linux/sched.h",
+        "sha256": "d8b819f7a144638bde2c870510f001f114fd3e06f4de35d8413ec706df262a40"
+      },
+      {
+        "file": "include/linux/sched/bore.h",
+        "sha256": "cdfe3e7d7732a378903a1169f5d350dae636ae068c9e2a56aa133b1193111e9c"
+      },
+      {
+        "file": "init/Kconfig",
+        "sha256": "95e2dc255d5c1f2bfa817bb0bd20eb937c1f879833d3678e456bc88f0e1502f0"
+      },
+      {
+        "file": "kernel/Kconfig.hz",
+        "sha256": "2bd751fa885cc9d47787f98635b49f539719012726adb9f746f339e08254d222"
+      },
+      {
+        "file": "kernel/exit.c",
+        "sha256": "5f322d44a427177fe78beb013d2a174561ed1dad6cdebd70cc9cbc942fe6cb42"
+      },
+      {
+        "file": "kernel/fork.c",
+        "sha256": "3e7d61cf9b28e06587e75ae3c918f1781a1a976e2eb644fa08e56db89b3a8b25"
+      },
+      {
+        "file": "kernel/futex/waitwake.c",
+        "sha256": "1612d49b6ae9c1b630b7530f2c00bde102405cc58891d6f494658daa06614124"
+      },
+      {
+        "file": "kernel/sched/Makefile",
+        "sha256": "4cebe8d560535ff6ac8722270e1512098789fc0eba442293fadb7e697ee846f8"
+      },
+      {
+        "file": "kernel/sched/bore.c",
+        "sha256": "9df5577aa2275b40c6137a6a3750f8a47edbdfd37790c97bcc52b60531af4d2e"
+      },
+      {
+        "file": "kernel/sched/build_utility.c",
+        "sha256": "c8eeab60b7779218f8c4afc946bcc95327525a40ea81699e3eaa8ec3e20d6c9f"
+      },
+      {
+        "file": "kernel/sched/core.c",
+        "sha256": "ad0c1436034b3ded00b87bc00e3f7ee8bf7af42c887fb68c28a9d9f971c51150"
+      },
+      {
+        "file": "kernel/sched/debug.c",
+        "sha256": "33a746e6a9f9ea73d0e8c1e4eed296bd241e469275d805c0673002b395097ba4"
+      },
+      {
+        "file": "kernel/sched/fair.c",
+        "sha256": "1d788d2668e22d3cb7c21e56b264ec871c3056f196c825a82cb248c0ab694359"
+      },
+      {
+        "file": "kernel/sched/sched.h",
+        "sha256": "f63bf58a189873d4fa84bfe723df54ec87dfb3294e08e8a7aed9d006344446ef"
+      }
+    ]
+  },
+  "audited_release": {
+    "id": "20261101-0.9.1",
+    "source_archive": "linux-source-7.3.0-ascalonkernel.tar.xz",
+    "source_archive_sha256": "f1b18c46f53c1d4d879cdcede90096955ea0f40521d08878a44e3dd8bf154abc",
+    "source_archive_bytes": 194814468,
+    "config_sha256": "0be01a983d308d6570f0c2008014e2268c5013c3e8e60913e9340477557b6b43",
+    "installed_config_matches": true,
+    "full_pristine_tree_comparison_performed": false
+  },
+  "artifacts": [
+    {
+      "file": "patches/0001-bore-mainline.patch",
+      "bytes": 44503,
+      "sha256": "a28dfea2ac34b02a23b2e04a47d4d05aabe970b5dfcfbf6b824dc21d8c15734c"
+    },
+    {
+      "file": "configs/config-7.3.0-ascalonkernel",
+      "bytes": 297228,
+      "sha256": "0be01a983d308d6570f0c2008014e2268c5013c3e8e60913e9340477557b6b43"
+    },
+    {
+      "file": "configs/config-7.3.0-ascalonkernel.audit.json",
+      "bytes": 126141,
+      "sha256": "556a4df1bcc850db6fab9df3a535c0ef18abd642235b09490bf21bbd829224cd"
+    }
+  ]
+}

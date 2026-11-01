@@ -16,6 +16,7 @@ import urllib.request
 from urllib.parse import unquote
 import apt
 from rebuild_plan import effective_packages
+from apt_inputs import download_uris, allowed_list_file
 
 
 def sha(p):
@@ -57,6 +58,26 @@ assert policy['policy']=='apt-native-custom-source' and policy['custom_source_bu
 plan=json.loads((root/'source-plan.json').read_text());packages=effective_packages(root,plan)
 custom=json.loads((root/'custom-components.json').read_text())
 cache=apt.Cache();selected=[];replacements=[];errors=[];proofs={}
+native_names={b['binary'].split(':')[0] for item in packages for b in item['binaries']}
+for extra in json.loads((repo/'config/mixed-runtime-additions.json').read_text())['packages']:
+    name=extra['package']
+    if name in native_names:continue
+    versions=[v for v in cache[name].versions if v.source_name==extra['source'] and
+              any(o.trusted and o.origin in policy['native_repositories'] for o in v.origins)]
+    if extra.get('version_from'):
+        # Bind Qt runtime modules to the exact library that this planner will
+        # select, including an authenticated same-source update of that library.
+        library=next(b for item in packages for b in item['binaries'] if b['binary'].split(':')[0]==extra['version_from'])
+        candidates=[v for v in cache[extra['version_from']].versions if v.source_name==extra['source'] and
+                    any(o.trusted and o.origin in policy['native_repositories'] for o in v.origins)]
+        exact=[v for v in candidates if v.version==library['version']]
+        expected=(exact or candidates)[0].version
+        versions=[v for v in versions if v.version==expected]
+    if not versions:raise SystemExit('No authenticated matching runtime addition: '+name)
+    v=versions[0]
+    packages.append(dict(source=v.source_name,version=v.source_version,origin_source=v.source_name,
+        origin_version=v.source_version,recipe={},binaries=[dict(binary=name,version=v.version,source=v.source_name)]))
+    native_names.add(name)
 records=[r for f in (root/'build').rglob('results.json') for r in json.loads(f.read_text()) if not r['exit_code']]
 
 
@@ -117,8 +138,7 @@ for item in packages:
                      for o in v.origins if o.trusted and o.origin in policy['native_repositories']]
             assert origins,'No authenticated Debian/Pi repository'
             digest=v.record['SHA256'];size=int(v.record['Size'])
-            uris=[u for u in v.uris if u.startswith(('https://mirrors.ustc.edu.cn/debian/',
-                'https://mirrors.ustc.edu.cn/debian-security/','https://archive.raspberrypi.com/debian/'))]
+            uris=download_uris(v.uris)
             assert uris and re.fullmatch('[0-9a-f]{64}',digest)
             selected.append(dict(package=name,architecture=v.architecture,version=v.version,
                 source=v.source_name,source_version=v.source_version,bytes=size,sha256=digest,
@@ -162,10 +182,13 @@ for b in custom:
 
 keys=[(s['package'],s['architecture']) for s in selected];assert len(keys)==len(set(keys))
 snapshot=out/'apt-snapshot';snapshot.mkdir(exist_ok=True)
-for directory,target in [(Path('/var/lib/apt/lists'),snapshot/'lists'),(Path('/etc/apt/sources.list.d'),snapshot/'sources.list.d')]:
+for directory,target in [(Path('/var/lib/apt/lists'),snapshot/'lists')]:
     target.mkdir(exist_ok=True)
     for f in directory.iterdir():
-        if f.is_file() and f.name!='lock':shutil.copy2(f,target/f.name)
+        if f.is_file() and f.name!='lock' and allowed_list_file(f.name):shutil.copy2(f,target/f.name)
+# Do not copy unrelated/private host repository configurations into evidence.
+write(snapshot/'repository-selection.json', dict(repositories=sorted({u.rsplit('/pool/',1)[0]
+    for s in selected if s['provenance']=='authenticated-apt' for u in s['uris']})))
 keys_dir=snapshot/'keyrings';keys_dir.mkdir(exist_ok=True)
 for name in ('debian-archive-keyring.pgp','raspberrypi-archive-keyring.pgp'):
     shutil.copy2(Path('/usr/share/keyrings')/name,keys_dir/name)
@@ -189,7 +212,8 @@ for name in ('arclight-nvidia-userspace','arclight-nvidia-open-dkms','arclight-n
     assert c['Package']==name and c['Version']==nv['debian_version']
     drivers.append(dict(**evidence(path),package=name,version=c['Version'],architecture=c['Architecture']))
 receipt['bundled_drivers']=dict(packages=drivers,installed_in_live_image=False,
-    open_module_source=evidence(nv_inputs[0]),official_closed_userspace_and_firmware=evidence(nv_inputs[1]),
+    open_module_source=evidence(dist/f"arclight-nvidia-open-source-{nv['version']}.tar.xz"),
+    official_closed_userspace_and_firmware=evidence(nv_inputs[1]),
     build_log=evidence(work/'logs/nvidia-build.log'),
     kernel_build_logs=[evidence(work/'logs'/f'nvidia-modules-{r}.log') for r in (sources_lock['kernel']['release'],release_config['fallback_kernel'])],
     hardware_validation='deferred until installation on physical NVIDIA hardware')

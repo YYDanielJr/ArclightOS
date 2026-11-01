@@ -1,6 +1,17 @@
 ARCLIGHT_WORK ?= $(if $(YYDANIEL_WORK),$(YYDANIEL_WORK),$(abspath ..))
 export ARCLIGHT_WORK
-.PHONY: all kernel desktop branding live source-base full-base full-iso mixed-local-base mixed-inputs mixed-iso mixed-release build-storage validation-tools nvidia iso source manifest release checkpoint release-prepare
+.DEFAULT_GOAL := all
+.PHONY: all kernel desktop branding live source-base full-base full-iso mixed-local-base mixed-inputs mixed-iso mixed-release build-storage validation-tools nvidia iso source manifest release checkpoint release-prepare iso-build kernel-stress-plan check-build-tools kernel-update upgrade-bundle
+kernel-update:
+	python3 scripts/update-kernel.py $(KERNEL_UPDATE_ARGS)
+upgrade-bundle:
+	python3 scripts/build-upgrade-bundle.py $(UPGRADE_ARGS)
+iso-build:
+	python3 scripts/build-iso.py $(ISO_ARGS)
+kernel-stress-plan:
+	python3 scripts/kernel-stress.py plan
+check-build-tools:
+	python3 scripts/test-build-and-stress.py
 all:
 	bash scripts/build-all.sh
 kernel:

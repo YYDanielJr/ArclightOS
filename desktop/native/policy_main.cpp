@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
       text += c;
     yy::require(text.size() <= 8192, "设置参数过长。");
     yy::apply_policy(argv[1], yy::J::parse(text));
-    if(std::string(argv[1]).rfind("iso-upgrade",0)!=0)
+    if(std::string(argv[1]).rfind("iso-upgrade",0)!=0 && std::string(argv[1]).rfind("bundle-upgrade",0)!=0)
       std::cout << "设置已保存。\n";
     return 0;
   } catch (const std::exception &e) {

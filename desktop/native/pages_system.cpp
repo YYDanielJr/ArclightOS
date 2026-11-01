@@ -77,9 +77,9 @@ GtkWidget *App::packages_page() {
             } else
               gtk_widget_destroy(d);
           }));
-  setting(g, "从 ISO 离线升级", "保留账户、个人文件和已有系统配置。",
-          button("选择升级镜像…", [this] {
-            auto d = gtk_dialog_new_with_buttons("ISO 离线升级", GTK_WINDOW(window),
+  setting(g, "从压缩包升级", "项目组件使用升级包，Debian 和树莓派组件继续通过 APT 更新。",
+          button("选择升级包…", [this] {
+            auto d = gtk_dialog_new_with_buttons("升级压缩包", GTK_WINDOW(window),
                 GTK_DIALOG_MODAL, "关闭", GTK_RESPONSE_CLOSE, nullptr);
             gtk_window_set_default_size(GTK_WINDOW(d), 720, 480);
             gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(GTK_DIALOG(d))),

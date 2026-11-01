@@ -173,6 +173,12 @@ int main(int argc, char **argv) {
              "reject injected upgrade plan");
     rejected([] { validate_policy("iso-upgrade-check",{{"iso","relative.iso"},{"sha256",std::string(64,'a')}}); },
              "reject relative ISO path");
+    validate_policy("bundle-upgrade-check",{{"bundle","/tmp/update.tar.xz"},{"sha256",std::string(64,'a')}});
+    test(true,"compressed update policy accepts an absolute input with complete digest");
+    rejected([]{validate_policy("bundle-upgrade-check",{{"bundle","relative.tar.xz"},{"sha256",std::string(64,'a')}});},
+             "compressed update rejects a relative archive path");
+    rejected([]{validate_policy("bundle-upgrade",{{"bundle","/tmp/update.tar.xz"},{"sha256",std::string(64,'a')},{"plan","stale"}});},
+             "compressed update rejects an invalid plan token");
     auto touch = J{{"naturalScroll","yes"},{"tap","yes"},{"tapAndDrag","yes"},
        {"dragLock","no"},{"disableWhileTyping","yes"},{"leftHanded","no"},
        {"scrollMethod","twofinger"},{"clickMethod","clickfinger"},
@@ -193,6 +199,40 @@ int main(int argc, char **argv) {
     char temp[] = "/tmp/arclight-native-tests-XXXXXX";
     auto dir = mkdtemp(temp);
     require(dir, "temporary directory");
+    auto fixture=[&](const fs::path &file,const std::vector<std::string> &names,int special=0) {
+      auto archive=archive_write_new();archive_write_set_format_pax_restricted(archive);
+      require(archive_write_open_filename(archive,file.c_str())==ARCHIVE_OK,"create update fixture");
+      for(auto &name:names) {
+        auto entry=archive_entry_new();archive_entry_set_pathname(entry,name.c_str());
+        archive_entry_set_perm(entry,0600);archive_entry_set_filetype(entry,special==1?AE_IFLNK:AE_IFREG);
+        if(special==1)archive_entry_set_symlink(entry,"../../outside");
+        else if(special==2)archive_entry_set_hardlink(entry,"../../outside");
+        else archive_entry_set_size(entry,2);
+        require(archive_write_header(archive,entry)==ARCHIVE_OK,"write update fixture header");
+        if(!special)archive_write_data(archive,"{}",2);
+        archive_entry_free(entry);
+      }
+      archive_write_close(archive);archive_write_free(archive);
+    };
+    auto update=fs::path(dir)/"update.tar";
+    fixture(update,{"upgrade/manifest.json","upgrade/pool/example_1_amd64.deb","sources/retained.tar.xz"});
+    auto extracted=fs::path(dir)/"update-content";
+    extract_update_bundle(update,extracted,1024);
+    test(read(extracted/"upgrade/manifest.json")=="{}" && read(extracted/"upgrade/pool/example_1_amd64.deb")=="{}",
+         "native update extraction reads the exact manifest and package bytes");
+    test(!fs::exists(extracted/"sources"),"update extraction skips corresponding source payloads");
+    fixture(update,{"../outside"});
+    rejected([&]{extract_update_bundle(update,fs::path(dir)/"traversal",1024);},"update rejects archive traversal");
+    fixture(update,{"/absolute-update-path"});
+    rejected([&]{extract_update_bundle(update,fs::path(dir)/"absolute",1024);},"update rejects absolute archive paths");
+    fixture(update,{"upgrade/pool/link.deb"},1);
+    rejected([&]{extract_update_bundle(update,fs::path(dir)/"links",1024);},"update rejects archive symlinks");
+    fixture(update,{"upgrade/pool/link.deb"},2);
+    rejected([&]{extract_update_bundle(update,fs::path(dir)/"hardlinks",1024);},"update rejects archive hardlinks");
+    fixture(update,{"upgrade/manifest.json","upgrade/manifest.json"});
+    rejected([&]{extract_update_bundle(update,fs::path(dir)/"duplicates",1024);},"update rejects duplicate archive files");
+    fixture(update,{"upgrade/manifest.json"});
+    rejected([&]{extract_update_bundle(update,fs::path(dir)/"oversized",1);},"update enforces the unpacked byte limit");
     setenv("XDG_CONFIG_HOME", dir, 1);
     write(config()/"labwc/rc.xml", "<labwc_config><keyboard><keybind key=\"Print\"><action name=\"Execute\"><command>keep-user-screenshot</command></action></keybind></keyboard></labwc_config>");
     desktop_defaults();

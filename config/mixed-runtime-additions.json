@@ -1,0 +1,12 @@
+{
+  "schema": "arclight.runtime-additions.v1",
+  "packages": [
+    {"package": "wl-clipboard", "source": "wl-clipboard"},
+    {"package": "nvidia-modprobe", "source": "nvidia-modprobe"},
+    {"package": "qml6-module-qtquick", "source": "qt6-declarative", "version_from": "libqt6quick6"},
+    {"package": "qml6-module-qtquick-window", "source": "qt6-declarative", "version_from": "libqt6quick6"},
+    {"package": "qml6-module-qtqml", "source": "qt6-declarative", "version_from": "libqt6quick6"},
+    {"package": "qml6-module-qtqml-models", "source": "qt6-declarative", "version_from": "libqt6quick6"},
+    {"package": "qml6-module-qtqml-workerscript", "source": "qt6-declarative", "version_from": "libqt6quick6"}
+  ]
+}

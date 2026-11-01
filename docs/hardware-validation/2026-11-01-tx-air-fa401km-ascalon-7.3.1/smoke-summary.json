@@ -1,0 +1,99 @@
+{
+  "kernel": "7.3.1-ascalonkernel",
+  "status": "passed-workloads",
+  "phases": [
+    {
+      "name": "cpu",
+      "status": "passed",
+      "seconds": 30.43,
+      "cpu_max_c": 65.5,
+      "nvme_max_c": 48.85
+    },
+    {
+      "name": "memory",
+      "status": "passed",
+      "seconds": 30.79,
+      "cpu_max_c": 69.5,
+      "nvme_max_c": 47.85
+    },
+    {
+      "name": "scheduler-switch",
+      "status": "passed",
+      "seconds": 10.47,
+      "cpu_max_c": 60.5,
+      "nvme_max_c": 47.85
+    },
+    {
+      "name": "scheduler-futex",
+      "status": "passed",
+      "seconds": 10.47,
+      "cpu_max_c": 66.625,
+      "nvme_max_c": 56.85
+    },
+    {
+      "name": "scheduler-pipe",
+      "status": "passed",
+      "seconds": 10.94,
+      "cpu_max_c": 63.5,
+      "nvme_max_c": 48.85
+    },
+    {
+      "name": "storage-verify",
+      "status": "passed",
+      "seconds": 1.12,
+      "cpu_max_c": 58.75,
+      "nvme_max_c": 48.85
+    },
+    {
+      "name": "mixed",
+      "status": "passed",
+      "seconds": 30.16,
+      "cpu_max_c": 68.125,
+      "nvme_max_c": 49.85
+    }
+  ],
+  "elapsed_seconds": 124.42,
+  "cpu_max_c": 69.5,
+  "nvme_max_c": 56.85,
+  "min_available_memory_mib": 26622,
+  "kernel_log_available": true,
+  "new_kernel_faults": [],
+  "file_verification": [
+    {
+      "log": "storage-verify-0.log",
+      "errors": [
+        0
+      ],
+      "read_bytes": 268435456,
+      "write_bytes": 268435456
+    },
+    {
+      "log": "mixed-1.log",
+      "errors": [
+        0
+      ],
+      "read_bytes": 268435456,
+      "write_bytes": 268435456
+    }
+  ],
+  "user_feedback": "User reports desktop normal; no black screen, obvious stutter or lost keyboard/mouse input during tests.",
+  "earlier_run": {
+    "status": "failed",
+    "cause": "IPC concurrent worker count exceeded advertised smoke budget; temperature protection aborted at 90 C.",
+    "report_sha256": "0dfece64d37b8eaed0d25fc555948e5110fe649e6bc0a38d7ecd2f25e750452e"
+  },
+  "current_report_sha256": "82bc420708c9351db154c7cc2dc0e5620d956820ff0b997e466f4006e77a900f",
+  "tool_revision": {
+    "current_script_sha256": "26afcc44c0bc9cdae454ef62dcfe64cfea50122d2abd38d20ff6ec23ec039942",
+    "regression_checks": 19,
+    "change": "Serial IPC within the original time budget; inherited workload CPU affinity limits all helper processes.",
+    "previous_frozen_script_sha256": "ef516c27af8e885d30597f439edb64ce740872179ff2bd6ba5735cfc9b01b6b7"
+  },
+  "scope": "Bounded 2-CPU smoke workloads only; GPU stress, full memory, long soak, suspend/resume and full hardware acceptance remain untested.",
+  "test_file_cleanup": {
+    "file": "workload.bin",
+    "bytes": 268435456,
+    "sha256": "92409986981d5b84be919ae24725f1726806a676043ec3d1575c49a10aa5a9b8",
+    "removed_after_crc_verification": true
+  }
+}

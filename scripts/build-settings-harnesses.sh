@@ -11,11 +11,11 @@ objcopy --redefine-sym main=arclight_settings_main "$objects/native/app.o" "$out
 parts=(page_apply layout pages_devices pages_system pages_bluetooth pages_input pages_upgrade pages_storage storage common display policy input upgrade)
 linked=()
 for name in "${parts[@]}"; do linked+=("$objects/native/$name.o"); done
-for test in settings-discovery settings-drafts; do
+for test in settings-discovery settings-drafts upgrade-page; do
     g++ -std=c++17 $(pkg-config --cflags gtk+-3.0 libxml-2.0 gio-unix-2.0) \
         "$repo/scripts/build-tests/$test.cpp" "$output/test-app.o" "${linked[@]}" \
         -Wl,--export-dynamic $(pkg-config --libs gtk+-3.0 libxml-2.0 gio-unix-2.0) \
-        -ldl -lcrypt -pthread -o "$output/$test"
+        -ldl -lcrypt -larchive -pthread -o "$output/$test"
 done
 g++ -std=c++17 $(pkg-config --cflags gio-2.0 libxml-2.0) \
     "$repo/scripts/build-tests/storage-session.cpp" "$objects/native/storage.o" "$objects/native/common.o" \

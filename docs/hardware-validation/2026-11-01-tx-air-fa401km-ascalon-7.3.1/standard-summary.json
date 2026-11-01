@@ -1,0 +1,181 @@
+{
+  "schema": "arclight.kernel-stress-standard-summary.v1",
+  "kernel": "7.3.1-ascalonkernel",
+  "status": "passed-workloads",
+  "started_local": "2026-11-01T17:46:31+08:00",
+  "finished_local": "2026-11-01T18:26:40+08:00",
+  "elapsed_seconds": 2409.49,
+  "temperature_policy": "hardware",
+  "normal_software_temperature_cutoffs_enabled": false,
+  "vendor_cpu_tjmax_c": 100,
+  "firmware_or_kernel_thermal_controls_modified": false,
+  "workers": 16,
+  "workload_cpu_affinity": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "memory_mib": 4096,
+  "file_mib": 2048,
+  "phases": [
+    {
+      "name": "cpu",
+      "status": "passed",
+      "seconds": 600.43,
+      "cpu_max_c": 95.5,
+      "nvme_max_c": 58.85,
+      "min_available_memory_mib": 26646,
+      "cpu0_cppc_equivalent_mhz_median": 4758.9,
+      "cppc_feedback_samples": 577
+    },
+    {
+      "name": "memory",
+      "status": "passed",
+      "seconds": 601.12,
+      "cpu_max_c": 88.25,
+      "nvme_max_c": 53.85,
+      "min_available_memory_mib": 22137,
+      "cpu0_cppc_equivalent_mhz_median": 2465.2,
+      "cppc_feedback_samples": 576
+    },
+    {
+      "name": "scheduler-switch",
+      "status": "passed",
+      "seconds": 200.68,
+      "cpu_max_c": 78.875,
+      "nvme_max_c": 52.85,
+      "min_available_memory_mib": 26675,
+      "cpu0_cppc_equivalent_mhz_median": 4881.9,
+      "cppc_feedback_samples": 193
+    },
+    {
+      "name": "scheduler-futex",
+      "status": "passed",
+      "seconds": 200.62,
+      "cpu_max_c": 81.0,
+      "nvme_max_c": 52.85,
+      "min_available_memory_mib": 26689,
+      "cpu0_cppc_equivalent_mhz_median": 4924.0,
+      "cppc_feedback_samples": 193
+    },
+    {
+      "name": "scheduler-pipe",
+      "status": "passed",
+      "seconds": 201.08,
+      "cpu_max_c": 78.375,
+      "nvme_max_c": 58.85,
+      "min_available_memory_mib": 26370,
+      "cpu0_cppc_equivalent_mhz_median": 4941.5,
+      "cppc_feedback_samples": 192
+    },
+    {
+      "name": "storage-verify",
+      "status": "passed",
+      "seconds": 5.35,
+      "cpu_max_c": 66.375,
+      "nvme_max_c": 50.85,
+      "min_available_memory_mib": 26455,
+      "cpu0_cppc_equivalent_mhz_median": 3269.4,
+      "cppc_feedback_samples": 6
+    },
+    {
+      "name": "mixed",
+      "status": "passed",
+      "seconds": 600.16,
+      "cpu_max_c": 95.5,
+      "nvme_max_c": 61.85,
+      "min_available_memory_mib": 22077,
+      "cpu0_cppc_equivalent_mhz_median": 4744.0,
+      "cppc_feedback_samples": 576
+    }
+  ],
+  "cpu_max_c": 95.5,
+  "nvme_max_c": 61.85,
+  "min_available_memory_mib": 22077,
+  "taint_values": [
+    "12288"
+  ],
+  "ac_online_values": [
+    "1"
+  ],
+  "kernel_log_available": true,
+  "new_kernel_faults": [],
+  "post_stop_kernel_log_rows": 0,
+  "workload_issues": [],
+  "hardware_response_events": [],
+  "file_verification": [
+    {
+      "log": "storage-verify-0.log",
+      "errors": [
+        0
+      ],
+      "read_bytes": 2147483648,
+      "write_bytes": 2147483648,
+      "job_runtime_ms": [
+        4100
+      ]
+    },
+    {
+      "log": "mixed-1.log",
+      "errors": [
+        0
+      ],
+      "read_bytes": 2147483648,
+      "write_bytes": 2147483648,
+      "job_runtime_ms": [
+        24602
+      ]
+    }
+  ],
+  "total_verified_io_bytes": 8589934592,
+  "active_workloads_after_stop": 0,
+  "dpkg_audit_empty": true,
+  "failed_system_units_empty": true,
+  "user_feedback": {
+    "recorded_at": "2026-11-01T18:22:04.667360+08:00",
+    "source": "User response while final mixed phase was still running",
+    "question": "本轮持续压力测试期间，桌面是否出现黑屏、明显卡顿或键鼠输入失灵？",
+    "answer": "桌面正常，未发现这些异常",
+    "observed_until": "User response during mixed phase; subsequent minutes remain covered by telemetry only."
+  },
+  "raw_report_sha256": "8fe665edb8cd3206ea471e503225abfdc4be8d37b9964a8fe5e8b4f3a088ed8e",
+  "raw_samples_sha256": "82214dfeb74691eb88c55261a5def816d1f0f5c98f475e071a4843838ccb0588",
+  "script_sha256": "08907bda4e4501c1cc19338768f33799dcceb7428b04ae8434f954bfc099dec8",
+  "tools_receipt_sha256": "db01a0b7006b1d8526ed6a6adb785d1dc7af6c4142e359be34423b82f50a2fe5",
+  "thermal_interpretation": "CPU temperature stabilized around 95.4 C during sustained CPU and mixed loads with CPPC delivered-performance telemetry. No failed native thermal response was observed; neither emergency thermal shutdown nor a specific thermal versus power/current limiting cause was independently verified.",
+  "storage_scope": "Each fio job performed a finite 2 GiB write and readback. Random I/O overlapped the beginning of the mixed stage; storage I/O did not run continuously for 10 minutes.",
+  "not_tested": [
+    "cold-boot-and-fallback",
+    "nvidia-wayland-egl-vulkan-prime-and-vram",
+    "suspend-resume-3-or-more-cycles",
+    "external-displays-and-hotplug",
+    "audio-camera-bluetooth-usb",
+    "idle-rtd3-and-ac-battery",
+    "kselftest-ltp-and-debug-kernel",
+    "secure-boot",
+    "full-physical-memory-coverage",
+    "multi-hour-soak",
+    "continuous-long-duration-nvme-stress"
+  ],
+  "full_hardware_acceptance": false,
+  "test_file_cleanup": {
+    "file": "workload.bin",
+    "bytes": 2147483648,
+    "sha256": "bf840e708de76643ed4b639119eb977e2d912545b3b6585c5fa4d57928b4d9f0",
+    "removed_after_crc_verification": true,
+    "active_workloads_before_cleanup": 0
+  }
+}

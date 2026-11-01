@@ -19,11 +19,13 @@ scripts/config --set-str LOCALVERSION "${release#"$(make -s kernelversion)"}" --
 make olddefconfig
 test "$(make -s kernelrelease)" = "$release"
 cp "$repo/config/sources.lock.json" arclight-sources.lock.json
+python3 "$repo/scripts/install-kernel-notes.py" "$tree"
 cp "$repo/scripts/build-ascalon-from-release.sh" build-ascalon-from-release.sh
 printf '%s\n' "$actual" > .ascalon-release-build
 cp .config "$work/dist/config-$release"
 export KBUILD_BUILD_USER=arclight KBUILD_BUILD_HOST=arclight-builder
-export KBUILD_BUILD_TIMESTAMP='2026-10-30 00:00:00 +0000' SOURCE_DATE_EPOCH=1793318400
+export SOURCE_DATE_EPOCH=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kernel"].get("source_date_epoch",1793318400))' "$repo/config/sources.lock.json")
+export KBUILD_BUILD_TIMESTAMP=$(date -u -d "@$SOURCE_DATE_EPOCH" '+%Y-%m-%d %H:%M:%S +0000')
 export KDEB_PKGVERSION="$debversion" KDEB_SOURCENAME=ascalon-linux KDEB_COMPRESS=zstd
 # Locally unpacked development packages are recorded in the tools manifest,
 # rather than installed in the host dpkg database. This skips only that database

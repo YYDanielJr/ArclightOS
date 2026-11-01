@@ -13,13 +13,12 @@ expected=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kern
 base_release=$(make -s kernelversion)
 [[ $expected == "$base_release"-* ]]
 localversion=${expected#"$base_release"}
-if [[ ! -f .arclight-bore-applied ]]; then
-    python3 "$repo/scripts/port-bore.py" "$work/sources/0001-bore-cachy.patch" "$work/sources/0001-bore-mainline.patch"
-    git apply --check "$work/sources/0001-bore-mainline.patch"
-    git apply "$work/sources/0001-bore-mainline.patch"
-    sha256sum "$work/sources/0001-bore-cachy.patch" > .arclight-bore-applied
+python3 "$repo/scripts/apply-kernel-patches.py" "$tree" --report "$work/logs/kernel-patch-application.json"
+if [[ ! -f .config ]]; then
+    config="$repo/kernel/configs/config-$expected"
+    [[ -f $config ]] || config="$repo/config/kernel-base-amd64.config"
+    cp "$config" .config
 fi
-if [[ ! -f .config ]]; then cp "$repo/config/kernel-base-amd64.config" .config; fi
 scripts/config --set-str LOCALVERSION "$localversion" --disable LOCALVERSION_AUTO \
  --enable SCHED_BORE --enable PREEMPT --enable PREEMPT_DYNAMIC --disable PREEMPT_NONE \
  --disable PREEMPT_VOLUNTARY --disable HZ_250 --enable HZ_1000 --set-val HZ 1000 \
@@ -45,12 +44,20 @@ for symbol in HYPERV_VMBUS HYPERV_NET HYPERV_STORAGE HYPERV_UTILS HYPERV_BALLOON
     grep -q "^CONFIG_$symbol=m" .config
 done
 cp .config "$work/dist/config-$release"
+python3 "$repo/scripts/install-kernel-notes.py" "$tree"
 export KBUILD_BUILD_USER=arclight KBUILD_BUILD_HOST=arclight-builder
-export KBUILD_BUILD_TIMESTAMP='2026-10-30 00:00:00 +0000' SOURCE_DATE_EPOCH=1793318400
+export SOURCE_DATE_EPOCH=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kernel"].get("source_date_epoch",1793318400))' "$repo/config/sources.lock.json")
+export KBUILD_BUILD_TIMESTAMP=$(date -u -d "@$SOURCE_DATE_EPOCH" '+%Y-%m-%d %H:%M:%S +0000')
 export KDEB_PKGVERSION=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["kernel"]["debian_version"])' "$repo/config/sources.lock.json")
 export KDEB_COMPRESS=zstd
 export KDEB_SOURCENAME=ascalon-linux
-make -j"${JOBS:-3}" bindeb-pkg
+flags=()
+if [[ -n ${ARCLIGHT_TOOLS:-} ]]; then
+    test -f "$ARCLIGHT_TOOLS/usr/include/libelf.h"
+    test -f "$ARCLIGHT_TOOLS/usr/include/openssl/ssl.h"
+    flags=(DPKG_FLAGS=--no-check-builddeps)
+fi
+make -j"${JOBS:-3}" bindeb-pkg "${flags[@]}"
 find "$work/build" -maxdepth 1 -type f \( -name "*_${KDEB_PKGVERSION}_*.deb" -o -name "*_${KDEB_PKGVERSION}_*.buildinfo" -o -name "*_${KDEB_PKGVERSION}_*.changes" \) -exec cp -a {} "$work/dist/" \;
 python3 "$repo/scripts/package-kernel-meta.py"
 cd "$work/dist"
