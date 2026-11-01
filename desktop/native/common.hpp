@@ -34,6 +34,7 @@ J touchpad_settings();
 std::string touchpad_xml(const std::string &, const J &);
 void touchpad_save(const J &);
 void desktop_defaults();
+void labwc_reconfigure();
 std::string hotkey_xml(const std::string &);
 std::string iso_upgrade(const J &, bool);
 void idle_start();

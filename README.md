@@ -13,7 +13,7 @@ AscalonKernel（阿斯卡纶内核）基于锁定的 Linux 上游源码，采用
 | 基础桌面 | Raspberry Pi Desktop amd64 Trixie；官方 ISO 固定 SHA256 |
 | AscalonKernel | Linux 7.3 + 移植的 BORE；release `7.3.0-ascalonkernel` |
 | 回退内核 | 本地源码构建的 Debian 6.12.113，独立保留 |
-| 原生桌面工具 | `arclight-desktop` 0.9.1（当前源码）；C++17 / GTK 3 |
+| 原生桌面工具 | `arclight-desktop` 0.9.2（当前源码）；C++17 / GTK 3 |
 | 设置 | 19 分类、49 视图，待应用计数与位置跳转，显示变更独立进程自动回退 |
 | 截图 | 窗口选区、区域截图、箭头、形状、文字和剪贴板 |
 | 压缩管理器 | GTK / 原生 7-Zip + libarchive；算法、线程、字典、固实、加密、分卷和编码器实时压缩比 |
@@ -26,6 +26,8 @@ AscalonKernel（阿斯卡纶内核）基于锁定的 Linux 上游源码，采用
 完整镜像为 `arclightos-trixie-amd64-20261101-0.9.1.iso`，支持 BIOS / UEFI Live 与 Calamares 离线安装。下载后先按该版 `arclight-release.sha256` 检查哈希。实际验收范围见随版 `arclight-release-validation.json` 和 [发布说明](docs/release-readme.md)。旧镜像通过的项目不会自动计为新版通过。
 
 当前完整 ISO 已整合桌面 0.9.1，支持独立 Live 与离线安装，见 [新镜像](docs/image-0.9.1.md)、[设置与 OSD](docs/desktop-0.9.1.md)及[高级压缩](docs/desktop-0.8.0.md)。0.8.0 和更早发行的历史哈希与报告继续保留。
+
+0.9.1 随后在实体机重启时发现桌面启动竞态，可能导致登录后面板和桌面图标没有出现。已提供并在本机安装桌面 0.9.2 热修复，见 [故障与验证记录](docs/desktop-0.9.2.md)。上述 ISO 仍包含 0.9.1，未覆盖原文件；实体机修复后的再次冷启动尚待验证。
 
 ISO、DEB、对应源码归档和大型构建证据属于 Release 附件，不进入 Git 历史。运行系统中的普通用户、密钥、网络配置和缓存不会复制进镜像。
 

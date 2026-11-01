@@ -109,7 +109,7 @@ void touchpad_save(const J &values) {
   auto path = config() / "labwc/rc.xml";
   auto before = source();
   write(path, touchpad_xml(before, values));
-  run({"labwc", "--reconfigure"});
+  labwc_reconfigure();
 }
 std::string hotkey_xml(const std::string &original) {
   auto d=parse(original);

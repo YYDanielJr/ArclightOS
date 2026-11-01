@@ -25,14 +25,14 @@ int main(int argc, char **argv) {
         yy::display_rollback(lease);
     } else if(argc==2 && std::string(argv[1])=="--refresh-desktop") {
       yy::desktop_defaults();
-      yy::run({"labwc","--reconfigure"});
+      yy::labwc_reconfigure();
     } else if(argc==2 && std::string(argv[1])=="--repair-input-method") {
       yy::require(yy::repair_input_environment(true),"没有找到本程序管理的输入法环境块。");
       std::cout<<"Input environment repaired. Restart already running applications to inherit it.\n";
     } else {
       yy::repair_input_environment();
       yy::require(argc == 1, "未知的会话参数。");
-      try { yy::desktop_defaults(); yy::run({"labwc","--reconfigure"}); } catch (const std::exception &e) {
+      try { yy::desktop_defaults(); yy::labwc_reconfigure(); } catch (const std::exception &e) {
         std::cerr << "Desktop defaults: " << e.what() << '\n';
       }
       yy::idle_start();

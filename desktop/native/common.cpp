@@ -2,6 +2,8 @@
 #include "common.hpp"
 #include <algorithm>
 #include <chrono>
+#include <climits>
+#include <csignal>
 #include <condition_variable>
 #include <crypt.h>
 #include <fstream>
@@ -14,6 +16,7 @@
 #include <sstream>
 #include <sys/random.h>
 #include <sys/stat.h>
+#include <sys/syscall.h>
 #include <thread>
 #include <unistd.h>
 namespace yy {
@@ -32,6 +35,29 @@ fs::path state() {
 void require(bool b, const std::string &s) {
   if (!b)
     throw std::runtime_error(s);
+}
+void labwc_reconfigure() {
+  // Pi's lwrespawn compares pidof labwc snapshots. A short-lived
+  // "labwc --reconfigure" process can make its initial comparison fail,
+  // so notify only the compositor exported by this graphical session.
+  auto raw = env("LABWC_PID");
+  require(!raw.empty() && raw.find_first_not_of("0123456789") == raw.npos,
+          "没有有效的 labwc 会话。");
+  auto value = std::stol(raw);
+  require(value > 1 && value <= INT_MAX, "无效的 labwc 进程。");
+  struct Handle { int fd; ~Handle() { if (fd >= 0) close(fd); } };
+  Handle handle{int(syscall(SYS_pidfd_open, pid_t(value), 0))};
+  require(handle.fd >= 0, "labwc 会话已结束。");
+  auto proc = fs::path("/proc") / raw;
+  struct stat owner{};
+  std::error_code ec, target_error;
+  auto executable = fs::read_symlink(proc / "exe", ec);
+  auto expected = fs::canonical("/usr/bin/labwc", target_error);
+  require(!stat(proc.c_str(), &owner) && owner.st_uid == getuid() &&
+              !ec && !target_error && executable == expected,
+          "目标不是当前用户的 labwc 合成器。");
+  require(syscall(SYS_pidfd_send_signal, handle.fd, SIGHUP, nullptr, 0) == 0,
+          "无法重载 labwc 配置。");
 }
 bool safe(const std::string &s) {
   return s.find_first_of("\r\n") == s.npos && s.find('\0') == s.npos;
@@ -363,7 +389,7 @@ bool repair_input_environment(bool live) {
       auto v=it.value().get<std::string>();setenv(it.key().c_str(),v.c_str(),1);update.push_back(it.key()+"="+v);
     }
     run(update);
-    run({"labwc","--reconfigure"});
+    labwc_reconfigure();
     // Daemons retain log descriptors; waiting for captured stdout would hang
     // until the daemon exits. Start it independently and verify XIM separately.
     if(values["XMODIFIERS"]=="@im=fcitx")launch({"fcitx5","-r","-d"});
@@ -484,7 +510,7 @@ void magnifier(double scale, int width, int height, bool filter) {
   xmlFree(mem);
   xmlFreeDoc(doc);
   write(path, text);
-  run({"labwc", "--reconfigure"});
+  labwc_reconfigure();
 }
 std::vector<std::string> administrators() {
   std::vector<std::string> v;

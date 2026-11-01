@@ -1,3 +1,12 @@
+arclight-desktop (0.9.2) unstable; urgency=high
+
+  * Reload only the current user's compositor through a pinned pidfd,
+    avoiding a transient labwc process that races Pi's desktop supervisors.
+  * Cover the missed-start race and native compositor reload in isolated
+    PID and Wayland sessions.
+
+ -- YYDaniel <yydaniel@localhost>  Sun, 01 Nov 2026 09:20:00 +0800
+
 arclight-desktop (0.9.1) unstable; urgency=medium
 
   * Organize network tabs and continuously discover Wi-Fi and Bluetooth

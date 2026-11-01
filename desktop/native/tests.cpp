@@ -9,6 +9,7 @@
 #include <iostream>
 #include <sys/stat.h>
 #include <thread>
+#include <unistd.h>
 using namespace yy;
 static int checks = 0;
 static void test(bool ok, const std::string &m) {
@@ -57,6 +58,16 @@ int main(int argc, char **argv) {
            "restore disabled output and its mode");
       return 0;
     }
+    auto previous_labwc_pid=env("LABWC_PID");bool had_labwc_pid=getenv("LABWC_PID")!=nullptr;
+    unsetenv("LABWC_PID");
+    rejected([]{labwc_reconfigure();},"reload rejects a missing compositor PID");
+    setenv("LABWC_PID","invalid",1);
+    rejected([]{labwc_reconfigure();},"reload rejects a malformed compositor PID");
+    setenv("LABWC_PID","1",1);
+    rejected([]{labwc_reconfigure();},"reload rejects a reserved PID");
+    setenv("LABWC_PID",std::to_string(getpid()).c_str(),1);
+    rejected([]{labwc_reconfigure();},"reload refuses an unrelated process without signalling it");
+    if(had_labwc_pid)setenv("LABWC_PID",previous_labwc_pid.c_str(),1);else unsetenv("LABWC_PID");
     auto bytes=[](std::string text){J result=J::array();for(unsigned char c:text)result.push_back(c);result.push_back(0);return result;};
     J storage=J::object();std::string ud="/org/freedesktop/UDisks2/",ub="org.freedesktop.UDisks2.";
     storage[ud+"drives/usb"][ub+"Drive"]={{"Model","USB Test"},{"ConnectionBus","usb"},{"CanPowerOff",true},{"Size",uint64_t(1024)}};

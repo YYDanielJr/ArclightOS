@@ -1,6 +1,6 @@
 {
   "desktop": {
-    "version": "0.9.1"
+    "version": "0.9.2"
   },
   "build_dependency_sources": {
     "nlohmann-json3": "3.11.3-2.1"

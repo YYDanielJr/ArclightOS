@@ -275,3 +275,9 @@ Get-FileHash -Algorithm SHA256 -LiteralPath dist/astgenne-os-trixie-amd64.iso
 最终 DEB SHA256 为 `5b8cdaf3cab08a23833e00c71687786632502b1e73335768fd78b4f9dc553b06`。干净构建通过 88 项原生、119 项压缩器和 17 项恢复策略检查；最终包通过 196 项布局、27 项按页应用、8 项 OSD、持续发现与八个默认应用字段定位检查。38 个原生源文件逐一匹配对应源码包，无编译载荷；9 个安装 ELF 与最终 DEB 一致，APT 检查通过。安装前备份为 `/var/backups/arclight-desktop-0.9.1-20261101-r4/`，旧备份链保留，没有重启会话或主动睡眠。
 
 最终 0.9.1 ISO 已通过六份新的 KVM 实测：主内核 BIOS/UEFI Live、两次正常可见的离线安装完成页与移除 ISO 后硬盘启动、回退内核 BIOS/UEFI Live。ISO **3,327,469,568 字节**，SHA256 `d7ad7f92e940ca3b21efe319a8f487e6c4a67ea879db88efbcc94276993c25b1`。四份 Live 各 20 项、两份安装后各 26 项检查通过；1883→1872 包，仅移除规定 11 项。23 项封装权限、NVIDIA 离线模拟、9 项真实 VT 恢复和 Live OSD 通过。附件目录 `ArclightOS-release/20261101-0.9.1/`；旧 0.8.0 发行与冻结归档保留。详细范围见 `docs/image-0.9.1.md`。
+
+## 2026-11-01 重启后桌面启动修复 0.9.2
+
+用户上传后重启，labwc/Wayland 已运行，但面板、pcmanfm 和两个 Pi 守护进程未启动。已复现 `labwc --reconfigure` 的短命同名进程使官方 `lwrespawn` 两次 PID 比较不同而提前退出；统一改用经 UID/可执行文件校验并以 pidfd 固定目标的 SIGHUP。已在原会话恢复桌面并安装 0.9.2，9 个 ELF 与最终 DEB 一致，APT 检查通过；备份 `/var/backups/arclight-desktop-0.9.2-20261101/`。没有重启主机或图形会话。
+
+干净构建通过 92 项核心、119 项压缩和 17 项恢复检查。最终 DEB 在私有 PID/Wayland 中通过 3 个冷会话及真实登录助手、30 次刷新、6 个监管测试组件启动和 3 次子进程重启；实体当前会话重载通过，**补丁后的实体再次冷启动仍未测**。详见 `docs/desktop-0.9.2.md`。本轮只交付独立桌面热修复，不覆盖用户已上传的 0.9.1 ISO、冻结源码或原清单；最近完整镜像仍为 0.9.1，含有上述启动竞态。
