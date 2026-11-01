@@ -8,7 +8,7 @@ AscalonKernel（阿斯卡纶内核）基于锁定的 Linux 上游源码，采用
 
 stable 小版本的一键准备、补丁应用、构建和安装见 [内核自动更新](docs/kernel-automatic-updates.md)。日常项目组件更新改用 GitHub Release 压缩包，使用方法及旧 ISO 升级器迁移见 [压缩包升级](docs/offline-upgrade.md)；Debian/Pi 原生包继续通过正常 APT 更新。
 
-本轮构建证据见 [7.3.1 内核](docs/kernel-7.3.1.md)和[桌面 0.10.0](docs/desktop-0.10.0.md)，实际安装/启动验收与编译结果分开记录。
+完整 ISO 与 TAR.ZST 升级包见 [0.10.0 发行记录](docs/image-0.10.0.md)。本轮构建证据见 [7.3.1 内核](docs/kernel-7.3.1.md)和[桌面 0.10.0](docs/desktop-0.10.0.md)，实际安装/启动验收与编译结果分开记录。
 
 本项目原名 Astgenne OS / Astesia Kernel。旧发行产物和验收记录中的名称、版本、哈希保留原样。新版本使用独立内核 ABI，兼容旧设置命令、私有配置和升级元包。详情见 [名称迁移](docs/rebranding-20261031.md)。
 
@@ -17,7 +17,7 @@ stable 小版本的一键准备、补丁应用、构建和安装见 [内核自�
 | 组件 | 输入或实现 |
 |---|---|
 | 基础桌面 | Raspberry Pi Desktop amd64 Trixie；官方 ISO 固定 SHA256 |
-| AscalonKernel | 当前源码 Linux 7.3.1 + BORE；release `7.3.1-ascalonkernel`；已发布完整 ISO 仍保留其 7.3.0 基线 |
+| AscalonKernel | 当前源码 Linux 7.3.1 + BORE；release `7.3.1-ascalonkernel`；本轮完整 ISO 为桌面 0.10.0 / 内核 7.3.1 |
 | 回退内核 | 本地源码构建的 Debian 6.12.113，独立保留 |
 | 原生桌面工具 | `arclight-desktop` 0.10.0（当前源码）；C++17 / GTK 3 |
 | 设置 | 19 分类、49 视图，待应用计数与位置跳转，显示变更独立进程自动回退 |

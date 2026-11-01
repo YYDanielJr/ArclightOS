@@ -1,0 +1,116 @@
+{
+  "schema": "arclight.image-0.10.0-validation.v1",
+  "release": "20261101-0.10.0",
+  "iso": "arclightos-trixie-amd64-20261101-0.10.0.iso",
+  "iso_bytes": 3327602688,
+  "iso_sha256": "9825bce8260329a00cc2a0fffa44fc3eb55dd8c2c809d3bbfa2986d3a37d169b",
+  "policy": "apt-native-custom-source",
+  "live_packages": 1883,
+  "installed_packages": 1872,
+  "authenticated_apt_packages": 1852,
+  "local_runtime_packages": 31,
+  "replaced_local_packages": 8,
+  "tests": [
+    {
+      "session": "mixed-bios",
+      "phase": "live",
+      "firmware": "bios",
+      "kernel": "7.3.1-ascalonkernel",
+      "packages": 1883,
+      "checks": 20,
+      "passed": true,
+      "normal_installation_completion": null
+    },
+    {
+      "session": "mixed-uefi",
+      "phase": "live",
+      "firmware": "uefi",
+      "kernel": "7.3.1-ascalonkernel",
+      "packages": 1883,
+      "checks": 20,
+      "passed": true,
+      "normal_installation_completion": null
+    },
+    {
+      "session": "disk-bios",
+      "phase": "installed",
+      "firmware": "bios",
+      "kernel": "7.3.1-ascalonkernel",
+      "packages": 1872,
+      "checks": 26,
+      "passed": true,
+      "normal_installation_completion": true
+    },
+    {
+      "session": "disk-uefi",
+      "phase": "installed",
+      "firmware": "uefi",
+      "kernel": "7.3.1-ascalonkernel",
+      "packages": 1872,
+      "checks": 26,
+      "passed": true,
+      "normal_installation_completion": true
+    },
+    {
+      "session": "fallback-bios",
+      "phase": "live",
+      "firmware": "bios",
+      "kernel": "6.12.113+deb13.1-amd64",
+      "packages": 1883,
+      "checks": 20,
+      "passed": true,
+      "normal_installation_completion": null
+    },
+    {
+      "session": "fallback-uefi",
+      "phase": "live",
+      "firmware": "uefi",
+      "kernel": "6.12.113+deb13.1-amd64",
+      "packages": 1883,
+      "checks": 20,
+      "passed": true,
+      "normal_installation_completion": null
+    }
+  ],
+  "software_validation_complete": true,
+  "upgrade": {
+    "passed": true,
+    "file": "arclight-update-20261101-0.10.0-r3-amd64.tar.zst",
+    "bytes": 1072319885,
+    "sha256": "e47a39c98e6ea70f76d63c14412b2bfb36f2719cdf771acdbbec3a8b82773100",
+    "files": 77,
+    "local_packages": 34,
+    "native_apt_packages": 0,
+    "source_inputs_covered": 29,
+    "all_payload_hashes_verified": true,
+    "retained_new_kernel_condition_verified": true,
+    "native_libarchive_zstd_reader_passed": true,
+    "real_archive_bootstrap_desktop_extraction_passed": true,
+    "regression_checks": 10,
+    "old_condition_regression_reproduced": true
+  },
+  "desktop": {
+    "version": "0.10.0",
+    "matched_native_sources": 38,
+    "recorded_checks": {
+      "native": 103,
+      "archive": 119,
+      "session": 17,
+      "layout_views": 196,
+      "final_upgrade_page_cases": 4
+    }
+  },
+  "image_permission_checks": 23,
+  "nvidia_offline_dependency_simulation_passed": true,
+  "host_boot_or_packages_changed": false,
+  "full_hardware_acceptance": false,
+  "deferred": [
+    "full-physical-memory",
+    "multi-hour-soak",
+    "physical-GPU-stress-on-7.3.1",
+    "suspend-resume",
+    "external-displays",
+    "physical-fallback-kernel-boot",
+    "Secure-Boot"
+  ]
+}

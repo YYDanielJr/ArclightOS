@@ -2,6 +2,8 @@
 
 2026-11-01，从签名验证的全新 Linux 7.3.1 源码自动应用既有 BORE 补丁。未改写 BORE，配置相对 7.3.0 无符号差异。
 
+后续实体机已实际启动 `7.3.1-ascalonkernel`，NVIDIA 模块加载及 NVML 查询成功；原厂温控监测模式下的 40 分 9 秒标准压力测试七阶段通过，CPU 最高 95.5°C，无新增内核故障。完整记录见 [实体启动与压力测试](hardware-validation/2026-11-01-tx-air-fa401km-ascalon-7.3.1/validation.md)。GPU 图形/显存压力、完整内存及睡眠恢复仍待测，旧可用内核与永久回退配置保留。
+
 逐文件比较覆盖 96,081 个上游文件，14 个 Linux 实现文件差异均属于已声明的 BORE 补丁，无未声明修改。Python 解包规范化的一个 PowerPC 自测试符号链接已自动恢复为上游原文，保留了单独日志。
 
 image/headers 与三个元包构建通过；NVIDIA 615.78.08 的五个开放模块从干净源码编译，版本及 vermagic 全部匹配。编译器为 GCC 14.2.0；认证 APT 解包工具清单随证据保留。未宣称位级可复现或性能收益。
@@ -29,4 +31,4 @@ image/headers 与三个元包构建通过；NVIDIA 615.78.08 的五个开放模�
 
 initramfs/内建检查覆盖 Hyper-V VMBus、存储、网络、NVMe、AHCI、VirtIO PCI/块设备/SCSI，八项通过。GRUB 保留 7.3.0 为永久默认，新 7.3.1 仅安排单次试启动；本机覆盖配置在 /etc/default/grub.d/99-arclight-update-trial.cfg，原 90-arclight-kernel-default.cfg 保留。备份在 /var/backups/arclight-kernel-update-20261101-163942/。
 
-**当前运行仍是 7.3.0-ascalonkernel，没有自动重启或挂起。7.3.1 的实体引导、图形、睡眠与性能尚未验收。** 保存工作后，用户下次通过 GRUB 启动将试用新内核；回退入口可选 7.3.0。通过实体回归后再调整永久默认。详见 [更新包发布与验收](update-20261101.md)。
+**该安装事务结束时仍运行 7.3.0-ascalonkernel，安装程序没有自动重启或挂起。** 随后用户已自行启动 7.3.1，结果见本文开头及实体报告。永久默认和 7.3.0 回退仍保留，待其余实体回归完成后另行调整。详见 [更新包发布与验收](update-20261101.md)。
