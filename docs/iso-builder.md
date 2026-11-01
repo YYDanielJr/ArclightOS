@@ -68,6 +68,23 @@ python3 scripts/build-iso.py --work /absolute/build/arclight-new --resume
 
 生成 ISO 后按 [完整验收](iso-validation.md) 完成主内核 BIOS/UEFI Live、两次离线安装与移除介质后硬盘启动、回退内核 BIOS/UEFI Live。Linux 使用 KVM、Windows 使用 Hyper-V；不自动使用 TCG。看过实际完成页和桌面才能写对应检查记录。
 
+## 已有发行的增量装配
+
+已有完整、可核验的发行工作区时，可用 `scripts/prepare-derived-image.py` 为新工作区保留未经修改的 APT 二进制和原始源码构建证据，再纳入更新组件。它不会把保留的包记作本轮重新编译。先按新 `config/release.json` 导出工程源码，再准备输入：
+
+```bash
+ARCLIGHT_WORK=/absolute/repo/.local/new-release bash scripts/export-source.sh
+python3 scripts/prepare-derived-image.py /absolute/repo/.local/new-release \
+  --parent-work /absolute/previous-release \
+  --desktop-work /absolute/recorded-desktop-build \
+  --kernel-work /absolute/recorded-kernel-build \
+  --installer-work /absolute/recorded-installer-build
+```
+
+`--kernel-work`、`--installer-work` 可省略，未指定时保留父发行对应包。内核更新必须具有成功的 `kernel-build-artifacts.json`、精确 DEB 哈希、image/headers 的 buildinfo、对应源码和新 ABI 的五个 NVIDIA 模块验证；安装器要求匹配的 DSC、源码输入、buildinfo 和构建日志。所有替换包必须升级版本，内核 ABI 改名只允许替换对应 image/headers；其他包的版本、哈希及数量严格保持一致。新 receipt 生成后重新验证保留的 APT 签名链。
+
+资源受限的实体宿主可使用现有认证解包工具和独立 KVM 构建来宾执行 `scripts/run-image-factory.sh`，只连接新建的带身份标记虚拟盘、只读官方 ISO/输入/源码以及本轮输出目录。宿主系统盘不接入来宾。生成后仍须重新进行六场景验收，旧发行的测试结果不能替代新镜像。
+
 当前旧发布归档器包含历史 `published_payload_recovery`、私有工具清单等前提，**新冷构建工作区不能直接套用它来宣布正式发布**。本入口完成的是可启动/可安装结构的候选镜像与构建证据；新的完整冷构建、六场景验收和独立发布归档还须实跑并验证。未在本轮宣称新 ISO 已通过。
 
 已完成的工具级验证与待测边界见 [验证记录](iso-tools-validation-20261101.md)。
