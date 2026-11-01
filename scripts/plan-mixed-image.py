@@ -59,11 +59,23 @@ plan=json.loads((root/'source-plan.json').read_text());packages=effective_packag
 custom=json.loads((root/'custom-components.json').read_text())
 cache=apt.Cache();selected=[];replacements=[];errors=[];proofs={}
 native_names={b['binary'].split(':')[0] for item in packages for b in item['binaries']}
-for extra in json.loads((repo/'config/mixed-runtime-additions.json').read_text())['packages']:
+runtime_additions=json.loads((repo/'config/mixed-runtime-additions.json').read_text())['packages']
+runtime_additions += [dict(package=n,source=n,version=v) for n,v in
+                     sources_lock['open_base'].get('native_preinstalled',{}).items()]
+for extra in runtime_additions:
     name=extra['package']
-    if name in native_names:continue
+    if name in native_names:
+        if extra.get('version'):
+            for item in packages:
+                for binary in item['binaries']:
+                    if binary['binary'].split(':')[0]==name:
+                        assert item['source']==extra['source']
+                        binary['version']=extra['version']
+        continue
     versions=[v for v in cache[name].versions if v.source_name==extra['source'] and
               any(o.trusted and o.origin in policy['native_repositories'] for o in v.origins)]
+    if extra.get('version'):
+        versions=[v for v in versions if v.version==extra['version']]
     if extra.get('version_from'):
         # Bind Qt runtime modules to the exact library that this planner will
         # select, including an authenticated same-source update of that library.

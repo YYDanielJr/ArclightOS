@@ -1,4 +1,6 @@
-# 四个 Pi 源码缺口的处理
+# 历史：四个 Pi 源码缺口的处理
+
+> 2026-11-01：当前 `apt-native-custom-source` 策略已撤销对 Connect 的移除和面板隐藏，也撤销三个旧版本 pin。官方 `rpi-connect 2.14.0` 作为认证 APT 包默认预装。下文只保留早期全量源码构建的原因及证据；不能继续按此文移除 Connect。详见 [官方组件恢复](pi-desktop-components.md)。
 
 已对四个准确版本分别实际执行 `apt-get source --download-only --only-source 包名=版本`，同时检查当前签名 `deb-src` 索引、直接 DSC 地址和公开上游分支。准确版本在本次可访问来源均不可获取，因此按用户授权选择可构建替代项，没有把旧源码冒充新版本。
 

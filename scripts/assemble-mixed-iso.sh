@@ -175,8 +175,9 @@ python3 - "$root" "$repo" "$work" <<'PY'
 from pathlib import Path
 import json,sys
 root,repo,work=map(Path,sys.argv[1:]);sources_lock=json.loads((repo/'config/sources.lock.json').read_text());lock=sources_lock['open_base']
-p=root/'etc/apt/preferences.d/arclight-open-base';p.parent.mkdir(parents=True,exist_ok=True)
-p.write_text(''.join(f'Package: {n}\nPin: version {lock[n]}\nPin-Priority: 1001\n\n' for n in ('pishutdown','raspberrypi-net-mods','wayvnc'))+'Package: rpi-connect rpi-connect-lite\nPin: version *\nPin-Priority: -1\n')
+sys.path.insert(0,str(repo/'scripts'))
+from pi_desktop_policy import configure
+configure(root)
 plan=json.loads((work/'full-rebuild/source-plan.json').read_text())
 firmware=next(p for p in plan['packages'] if p['source']=='firmware-nonfree')
 assert firmware['version']==sources_lock['firmware']['version']
@@ -195,14 +196,6 @@ for p in [root/'etc/apt/sources.list',*(root/'etc/apt/sources.list.d').glob('*.s
  if p.suffix=='.sources':text='\n\n'.join(b for b in text.split('\n\n') if 'file:/run/live/medium' not in b and 'cdrom:' not in b)
  else:text='\n'.join(l for l in text.splitlines() if 'file:/run/live/medium' not in l and 'cdrom:' not in l)+'\n'
  p.write_text(text)
-p=root/'etc/xdg/wf-panel-pi/wf-panel-pi.ini'
-if p.exists():
- lines=[]
- for l in p.read_text().splitlines():
-  if l.startswith(('widgets_left=','widgets_right=')):
-   k,v=l.split('=',1);l=k+'='+' '.join(x for x in v.split() if x!='connect')
-  lines.append(l)
- p.write_text('\n'.join(lines)+'\n')
 PY
 mapfile -t releases < <(python3 - "$receipt" <<'PY'
 import json,re,sys

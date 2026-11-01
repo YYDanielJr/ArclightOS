@@ -11,12 +11,15 @@
     "wayvnc": "0.10.2-1+rpt1",
     "live_source": "arclight-live",
     "live_version": "20251125.1+arclight1",
-    "removed": [
-      "rpi-connect"
-    ],
+    "removed": [],
+    "native_preinstalled": {
+      "rpi-connect": "2.14.0"
+    },
     "remote_access": [
       "wayvnc",
-      "openssh-server"
+      "openssh-server",
+      "rpi-connect",
+      "wfplug-connect"
     ],
     "installer_debian_version": "13.0.13+rpt3-5+arclight1"
   },

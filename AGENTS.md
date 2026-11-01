@@ -357,3 +357,12 @@ Get-FileHash -Algorithm SHA256 -LiteralPath dist/astgenne-os-trixie-amd64.iso
 本轮工作区 `.local/iso-0.10.0/`，交付目录 `dist/20261101-0.10.0/`。ISO 输入 `arclightos-source-20261101-0.10.0-input.tar.xz`、r3 升级输入 `arclightos-source-update-20261101-0.10.0-r3-input.tar.xz` 分别冻结；最终维护源码独立导出。完整 ISO 源码/日志/签名链和六项归档按发行清单保留。未将已有组件说成本轮重新编译，完整冷构建仍按 `docs/iso-builder.md` 独立验证。构建盘已正常关机、qemu-img 检查通过后清理。
 
 宿主仍运行 7.3.1，没有安装宿主新包、调整永久默认内核、睡眠或重启宿主。旧可用内核、旧 ISO、冻结源码和清单保留；真实 GPU 压力、完整内存、多小时浸泡、睡眠/多屏及 Secure Boot 范围没有扩大。详细说明见 `docs/image-0.10.0.md`。
+
+
+## 2026-11-01 官方 Pi 桌面组件恢复
+
+用户要求恢复本机 rpi-connect 及因早期全量源码构建移除的其他官方组件，并默认预装到 ISO。对锁定官方 ISO 的 1851 个实际安装包逐项比较，0.10.0 镜像除已替代的旧内核外仅缺 rpi-connect；其他 Pi 桌面包未缺失。官方 rpi-connect 2.14.0 已在本机认证 APT 安装，旧 -1 禁令、pishutdown/raspberrypi-net-mods/WayVNC 的旧固定 pin 已撤销，系统及本机个人面板入口恢复并在当前会话加载。只有一个新增包，没有删包或升级其他包，dpkg audit 正常。备份 `/var/backups/arclight-pi-components-20261101/`；未开启 Connect、未绑定用户账号。
+
+`pishutdown 0.44` 与 `raspberrypi-net-mods 1.4.5` 虽出现在原 ISO 的安装数据库，但本次官方新签名索引及原 ISO 保留的索引均只提供 0.43/1.4.4；不获取未经认证的旧 DEB，解除 pin 后跟随 APT 更新。`rpi-connect-lite` 不与完整 Connect 同装。当前策略的入口共用 `scripts/pi_desktop_policy.py`；`prepare-open-base.py` 在当前策略下转为官方 APT 安装，不执行旧移除分支。历史替代文档不能当作继续禁用 Connect 的指令。
+
+新镜像独立 ID `20261101-0.10.0-pi-r1`，桌面/内核等本地二进制版本保持不变，旧镜像及冻结清单不覆盖。构建及实际验证结果待新记录；详见 `docs/pi-desktop-components.md`。

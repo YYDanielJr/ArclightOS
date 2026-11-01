@@ -11,6 +11,11 @@ repo = Path(__file__).resolve().parents[1]
 work = Path(os.environ.get('ARCLIGHT_WORK', os.environ.get('YYDANIEL_WORK', repo.parent))).resolve()
 root = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else Path('/')
 lock = json.loads((repo / 'config/sources.lock.json').read_text())['open_base']
+# The source-only gap workaround is historical. Native Pi packages now follow
+# the project's authenticated APT policy, including Connect.
+if json.loads((repo / 'config/build-policy.json').read_text())['policy'] == 'apt-native-custom-source':
+    subprocess.run([sys.executable, str(repo / 'scripts/restore-pi-desktop.py'), '--root', str(root), '--install'], check=True)
+    raise SystemExit(0)
 if os.geteuid() != 0 or not (root / 'etc/debian_version').is_file():
     raise SystemExit('Run as root with a Debian root filesystem')
 prefix = [] if root == Path('/') else ['chroot', str(root)]
