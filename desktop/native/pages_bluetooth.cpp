@@ -2,6 +2,9 @@
 #include "app.hpp"
 #include <iomanip>
 #include <sstream>
+#include <mutex>
+#include <set>
+#include <memory>
 namespace yy {
 static void bt_set(const std::string &path, const char *iface,
                    const char *property, bool enabled) {
@@ -116,153 +119,75 @@ static void ensure_agent(App *app) {
     throw;
   }
 }
+struct Discovery {
+  std::mutex mutex;GDBusConnection *bus=nullptr;std::set<std::string> owned;std::atomic<bool> active{false};
+  GVariant *call(const std::string &path,const char *iface,const char *method) {
+    GError *error=nullptr;
+    if(!bus)bus=g_bus_get_sync(G_BUS_TYPE_SYSTEM,nullptr,&error);
+    if(!bus){std::string message=error?error->message:"蓝牙不可用";g_clear_error(&error);throw std::runtime_error(message);}
+    auto r=g_dbus_connection_call_sync(bus,"org.bluez",path.c_str(),iface,method,nullptr,nullptr,G_DBUS_CALL_FLAGS_NONE,3000,nullptr,&error);
+    if(!r){std::string message=error?error->message:"蓝牙操作失败";g_clear_error(&error);throw std::runtime_error(message);}return r;
+  }
+  void stop_locked() { for(auto &path:owned)try{g_variant_unref(call(path,"org.bluez.Adapter1","StopDiscovery"));}catch(...){} owned.clear(); }
+  J read() {
+    std::lock_guard<std::mutex> lock(mutex);
+    J objects;
+    try{auto r=call("/","org.freedesktop.DBus.ObjectManager","GetManagedObjects");objects=unpack(r)[0];g_variant_unref(r);}
+    catch(const std::exception &e){std::string error=e.what();if(error.find("ServiceUnknown")!=error.npos || error.find("NameHasNoOwner")!=error.npos)return J::object();throw;}
+    for(auto it=objects.begin();it!=objects.end();++it)if(it.value().contains("org.bluez.Adapter1")) {
+      auto adapter=it.value()["org.bluez.Adapter1"];
+      if(!adapter.value("Powered",false)){owned.erase(it.key());continue;}
+      if(active && (!owned.count(it.key()) || !adapter.value("Discovering",false)))try{g_variant_unref(call(it.key(),"org.bluez.Adapter1","StartDiscovery"));owned.insert(it.key());}catch(...){}
+    }
+    if(!active)stop_locked();
+    return objects;
+  }
+  void stop() {std::lock_guard<std::mutex> lock(mutex);stop_locked();}
+  ~Discovery(){stop();if(bus)g_object_unref(bus);}
+};
 GtkWidget *App::bluetooth_page() {
-  auto b = box(), content = box();
-  gtk_box_pack_start(GTK_BOX(b), content, FALSE, FALSE, 0);
-  auto refresh = [this, content] {
-    work(
-        [] {
-          bool hardware = false;
-          if (fs::exists("/sys/class/bluetooth"))
-            for (auto &f : fs::directory_iterator("/sys/class/bluetooth"))
-              if (f.path().filename().string().rfind("hci", 0) == 0)
-                hardware = true;
-          if (!hardware)
-            return J::object();
-          auto v = dbus("org.bluez", "/", "org.freedesktop.DBus.ObjectManager",
-                        "GetManagedObjects");
-          auto j = unpack(v)[0];
-          g_variant_unref(v);
-          return j;
-        },
-        [this, content](J objects) {
-          clear(content);
-          bool adapters = false;
-          for (auto it = objects.begin(); it != objects.end(); ++it) {
-            if (!it.value().contains("org.bluez.Adapter1"))
-              continue;
-            adapters = true;
-            auto path = it.key();
-            auto a = it.value()["org.bluez.Adapter1"];
-            auto g = section(content, a.value("Alias", "蓝牙适配器"));
-            auto power = toggle(a.value("Powered", false)),
-                 visible = toggle(a.value("Discoverable", false));
-            setting(g, "蓝牙电源", a.value("Address", ""), power);
-            setting(g, "允许附近设备发现此电脑", "", visible);
-            gtk_box_pack_start(
-                GTK_BOX(g),
-                save_button("应用适配器设置",
-                       [this, path, power, visible] {
-                         bool on = active(power), show = active(visible);
-                         action([path, on, show] {
-                           bt_set(path, "org.bluez.Adapter1", "Powered", on);
-                           if (on)
-                             bt_set(path, "org.bluez.Adapter1", "Discoverable",
-                                    show);
-                         });
-                       }),
-                FALSE, FALSE, 4);
-            gtk_box_pack_start(GTK_BOX(g),
-                               button("开始扫描",
-                                      [this, path] {
-                                        action([path] {
-                                          auto r = dbus("org.bluez", path,
-                                                        "org.bluez.Adapter1",
-                                                        "StartDiscovery");
-                                          g_variant_unref(r);
-                                        });
-                                        status("正在扫描。稍后点击刷新设备。");
-                                      }),
-                               FALSE, FALSE, 4);
-            gtk_box_pack_start(GTK_BOX(g),
-                               button("停止扫描",
-                                      [this, path] {
-                                        action([path] {
-                                          auto r = dbus("org.bluez", path,
-                                                        "org.bluez.Adapter1",
-                                                        "StopDiscovery");
-                                          g_variant_unref(r);
-                                        });
-                                      }),
-                               FALSE, FALSE, 4);
-            for (auto device = objects.begin(); device != objects.end();
-                 ++device) {
-              if (!device.value().contains("org.bluez.Device1"))
-                continue;
-              auto d = device.value()["org.bluez.Device1"];
-              if (d.value("Adapter", std::string()) != path)
-                continue;
-              auto p = device.key();
-              auto inner =
-                  section(g, d.value("Alias", d.value("Address", "蓝牙设备")));
-              setting(inner, "连接状态",
-                      std::string(d.value("Connected", false) ? "已连接"
-                                                              : "未连接") +
-                          " · " +
-                          (d.value("Paired", false) ? "已配对" : "未配对"));
-              auto buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-              if (!d.value("Paired", false))
-                gtk_box_pack_start(GTK_BOX(buttons),
-                                   button("配对…",
-                                          [this, p] {
-                                            ensure_agent(this);
-                                            action([p] { bt_call(p, "Pair"); },
-                                                   "正在配对，请留意配对码…");
-                                          }),
-                                   FALSE, FALSE, 0);
-              auto method =
-                  d.value("Connected", false) ? "Disconnect" : "Connect";
-              gtk_box_pack_start(
-                  GTK_BOX(buttons),
-                  button(d.value("Connected", false) ? "断开" : "连接",
-                         [this, p, method] {
-                           action([p, method] { bt_call(p, method); });
-                         }),
-                  FALSE, FALSE, 0);
-              bool trust = !d.value("Trusted", false);
-              gtk_box_pack_start(GTK_BOX(buttons),
-                                 button(trust ? "信任" : "取消信任",
-                                        [this, p, trust] {
-                                          action([p, trust] {
-                                            bt_set(p, "org.bluez.Device1",
-                                                   "Trusted", trust);
-                                          });
-                                        }),
-                                 FALSE, FALSE, 0);
-              gtk_box_pack_start(
-                  GTK_BOX(buttons),
-                  button(
-                      "忘记设备…",
-                      [this, p, path] {
-                        if (confirm("忘记此设备？", "下次连接时需要重新配对。"))
-                          action([p, path] {
-                            auto r = dbus("org.bluez", path,
-                                          "org.bluez.Adapter1", "RemoveDevice",
-                                          g_variant_new("(o)", p.c_str()));
-                            g_variant_unref(r);
-                          });
-                      }),
-                  FALSE, FALSE, 0);
-              gtk_box_pack_start(GTK_BOX(inner), buttons, FALSE, FALSE, 6);
-            }
-          }
-          if (!adapters)
-            setting(
-                content, "未检测到蓝牙适配器",
-                "插入蓝牙适配器后刷新。虚拟机不会自动获得宿主机的蓝牙设备。");
-          gtk_widget_show_all(content);
-        });
+  auto b=box(),content=box();gtk_box_pack_start(GTK_BOX(b),content,FALSE,FALSE,0);
+  struct Adapter {GtkWidget *group,*controls,*power,*visible,*devices;J cached;};
+  auto adapters=std::make_shared<std::map<std::string,Adapter>>();auto discovery=std::make_shared<Discovery>();
+  auto render=[this,content,adapters](J objects) {
+    std::set<std::string> present;
+    for(auto it=objects.begin();it!=objects.end();++it) {
+      if(!it.value().contains("org.bluez.Adapter1"))continue;
+      auto path=it.key();present.insert(path);auto a=it.value()["org.bluez.Adapter1"];
+      if(!adapters->count(path)) {
+        auto group=section(content,a.value("Alias","蓝牙"));auto controls=box(),power=toggle(a.value("Powered",false)),visible=toggle(a.value("Discoverable",false)),devices=box();
+        setting(controls,"蓝牙","",power);setting(controls,"允许附近设备发现此电脑","",visible);
+        gtk_box_pack_start(GTK_BOX(controls),save_button("应用蓝牙",[this,path,power,visible]{bool on=active(power),show=active(visible);action([path,on,show]{bt_set(path,"org.bluez.Adapter1","Powered",on);if(on)bt_set(path,"org.bluez.Adapter1","Discoverable",show);});}),FALSE,FALSE,0);
+        gtk_box_pack_start(GTK_BOX(group),controls,FALSE,FALSE,0);gtk_box_pack_start(GTK_BOX(group),devices,FALSE,FALSE,0);
+        (*adapters)[path]={group,controls,power,visible,devices,nullptr};
+      }
+      auto &ui=adapters->at(path);
+      if(!page_dirty(ui.controls)){gtk_switch_set_active(GTK_SWITCH(ui.power),a.value("Powered",false));gtk_switch_set_active(GTK_SWITCH(ui.visible),a.value("Discoverable",false));}
+      J list=J::object();for(auto d=objects.begin();d!=objects.end();++d)if(d.value().contains("org.bluez.Device1") && d.value()["org.bluez.Device1"].value("Adapter","")==path)list[d.key()]=d.value()["org.bluez.Device1"];
+      if(ui.cached==list)continue;
+      ui.cached=list;clear(ui.devices);
+      for(auto it=list.begin();it!=list.end();++it) {
+        auto d=it.value();auto p=it.key();auto inner=section(ui.devices,d.value("Alias",d.value("Address","蓝牙设备")));
+        setting(inner,"状态",std::string(d.value("Connected",false)?"已连接":"未连接")+"  "+(d.value("Paired",false)?"已配对":"未配对"));
+        if(!d.value("Paired",false))gtk_box_pack_start(GTK_BOX(inner),button("配对...",[this,p]{ensure_agent(this);action([p]{bt_call(p,"Pair");},"正在配对...");}),FALSE,FALSE,0);
+        auto method=d.value("Connected",false)?"Disconnect":"Connect";
+        gtk_box_pack_start(GTK_BOX(inner),button(d.value("Connected",false)?"断开":"连接",[this,p,method]{action([p,method]{bt_call(p,method);});}),FALSE,FALSE,0);
+        bool trust=!d.value("Trusted",false);gtk_box_pack_start(GTK_BOX(inner),button(trust?"信任":"取消信任",[this,p,trust]{action([p,trust]{bt_set(p,"org.bluez.Device1","Trusted",trust);});}),FALSE,FALSE,0);
+        gtk_box_pack_start(GTK_BOX(inner),button("忘记设备...",[this,p,path]{if(confirm("忘记此设备？","下次连接时需要重新配对。"))action([p,path]{auto r=dbus("org.bluez",path,"org.bluez.Adapter1","RemoveDevice",g_variant_new("(o)",p.c_str()));g_variant_unref(r);});}),FALSE,FALSE,0);
+      }
+      if(list.empty())gtk_box_pack_start(GTK_BOX(ui.devices),note("未发现设备"),FALSE,FALSE,0);
+    }
+    for(auto it=adapters->begin();it!=adapters->end();)if(!present.count(it->first)){gtk_widget_destroy(gtk_widget_get_parent(it->second.group));it=adapters->erase(it);}else ++it;
+    if(adapters->empty() && !g_object_get_data(G_OBJECT(content),"empty-label")) {
+      auto label=note("未检测到蓝牙适配器");g_object_set_data(G_OBJECT(content),"empty-label",label);gtk_box_pack_start(GTK_BOX(content),label,FALSE,FALSE,0);
+    } else if(!adapters->empty())if(auto label=static_cast<GtkWidget*>(g_object_get_data(G_OBJECT(content),"empty-label"))){gtk_widget_destroy(label);g_object_set_data(G_OBJECT(content),"empty-label",nullptr);}
+    gtk_widget_show_all(content);
   };
-  gtk_box_pack_start(GTK_BOX(b), button("刷新设备", refresh), FALSE, FALSE, 4);
-  gtk_box_pack_start(
-      GTK_BOX(b),
-      button("启用蓝牙服务…", [this] { service("bluetooth", true); }), FALSE,
-      FALSE, 4);
-  gtk_box_pack_start(
-      GTK_BOX(b),
-      button("完整蓝牙管理器…", [] { launch({"blueman-manager"}); }), FALSE,
-      FALSE, 4);
-  refresh();
-  return scroll(b);
+  auto refresh=[this,b,discovery,render]{discovery->active=!smoke && gtk_widget_get_mapped(b);background(b,[discovery]{return discovery->read();},render);};
+  auto leave=[discovery]{discovery->active=false;auto thread=g_thread_new("bt-stop",+[](gpointer p)->gpointer{auto state=static_cast<std::shared_ptr<Discovery>*>(p);(*state)->stop();delete state;return nullptr;},new std::shared_ptr<Discovery>(discovery));g_thread_unref(thread);};
+  gtk_box_pack_start(GTK_BOX(b),button("刷新",refresh),FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(b),button("蓝牙服务...",[this]{service("bluetooth",true);}),FALSE,FALSE,0);
+  gtk_box_pack_start(GTK_BOX(b),button("蓝牙管理器...",[]{launch({"blueman-manager"});}),FALSE,FALSE,0);
+  poll_page(b,3,refresh,leave);refresh();return scroll(b);
 }
 } // namespace yy

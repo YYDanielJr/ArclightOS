@@ -24,7 +24,7 @@ GtkWidget *App::touchpad_page() {
   setting(g, "指针加速", "", widgets["accelProfile"]);
   setting(g, "指针速度", "-1 最慢，0 默认，1 最快。只影响触控板。", widgets["pointerSpeed"]);
   setting(b, "生效范围", "适用于 labwc / Wayland 的触控板，不改变鼠标设置。"
-          "设备不支持的选项由 libinput 忽略；X11 请使用原生鼠标页。现有配置会备份。");
+          "X11 请使用原生鼠标页。");
   auto apply = save_button("应用触控板设置", [this, widgets] {
     J next = J::object();
     for (auto &[k, w] : widgets)

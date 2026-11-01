@@ -5,6 +5,7 @@
 #include <deque>
 #include <gtk/gtk.h>
 #include <map>
+#include <memory>
 #include <optional>
 #include <thread>
 namespace yy {
@@ -22,13 +23,14 @@ public:
   GtkApplication *application = nullptr;
   GtkWidget *window = nullptr, *navigation = nullptr, *stack = nullptr,
             *heading = nullptr, *subtitle = nullptr, *apply_button = nullptr,
-            *info = nullptr, *spinner = nullptr;
+            *info = nullptr, *spinner = nullptr, *pending_button = nullptr;
   std::map<std::string, GtkWidget *> rows, pages;
   std::map<std::string, std::string> terms;
   std::map<std::string, Native> plugins;
   std::vector<std::string> errors;
   std::vector<std::thread> workers;
   std::atomic<bool> alive{true};
+  std::shared_ptr<std::atomic<bool>> lifetime = std::make_shared<std::atomic<bool>>(true);
   bool dirty = false, smoke = false, all_pages = false;
   std::string initial = "network", catalog;
   std::string snapshot_dir;
@@ -58,9 +60,11 @@ public:
   void work(std::function<J()>, std::function<void(J)> = {},
             const std::string & = "正在读取设置…");
   void action(Fn, const std::string & = "正在保存设置…");
+  void background(GtkWidget *, std::function<J()>, std::function<void(J)>);
+  void poll_page(GtkWidget *, unsigned, Fn, Fn leave = {});
   void policy(const std::string &, const J &);
   GtkWidget *button(const std::string &, Fn);
-  GtkWidget *save_button(const std::string &, Fn);
+  GtkWidget *save_button(const std::string &, Fn, GtkWidget *scope = nullptr);
   struct Draft {
     GtkWidget *widget;
     J baseline;
@@ -74,6 +78,9 @@ public:
   GtkWidget *current_page();
   void track_page(GtkWidget *, bool native = false);
   void update_apply();
+  std::string draft_location(GtkWidget *);
+  size_t pending_count(GtkWidget *root = nullptr);
+  void show_pending();
   bool page_dirty(GtkWidget *);
   bool settle_pages();
   void apply_page(GtkWidget *);
@@ -89,6 +96,7 @@ public:
   GtkWidget *scroll(GtkWidget *);
   GtkWidget *tabs(const std::vector<std::pair<std::string, GtkWidget *>> &);
   GtkWidget *note(const std::string &);
+  GtkWidget *device_icon(const std::string &);
   std::vector<std::pair<std::string, GtkWidget *>>
   native(const std::string &, const std::vector<std::string> & = {});
   GtkWidget *rc(size_t);

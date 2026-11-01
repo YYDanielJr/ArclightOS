@@ -153,9 +153,17 @@ def main():
         files=[dict(file=p, sha256=h) for p, h in validation['packaged_elfs'].items()]))
     (work / 'tools').mkdir(exist_ok=True)
     shutil.copy2(parent / 'tools/packages.json', work / 'tools/packages.json')
-    (work / 'tools/root').symlink_to(parent / 'tools/root', target_is_directory=True)
+    # A parent release may live outside the new source checkout. Absolute
+    # links back into it do not resolve in the networkless 9p factory guest.
+    shutil.copytree((parent / 'tools/root').resolve(), work / 'tools/root', symlinks=True)
     (work / 'sources').mkdir(exist_ok=True)
-    (work / 'sources' / lock['base_image']['filename']).symlink_to(parent / 'sources' / lock['base_image']['filename'])
+    base_source = (parent / 'sources' / lock['base_image']['filename']).resolve(strict=True)
+    base_target = work / 'sources' / lock['base_image']['filename']
+    assert sha(base_source) == lock['base_image']['sha256']
+    try:
+        os.link(base_source, base_target)
+    except OSError:
+        shutil.copy2(base_source, base_target)
     validate_mixed_receipt(updated, verify_files=True)
     write(work / 'mixed-build/image-inputs.json', updated)
     subprocess.run(['python3', str(repo / 'scripts/verify-apt-snapshot.py'), str(work / 'mixed-build/image-inputs.json'), str(work / 'mixed-build/apt-authentication.json')], check=True)

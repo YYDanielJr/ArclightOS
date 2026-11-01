@@ -1,4 +1,6 @@
 arclight-settings usr/bin
+arclight-osd usr/bin
+share/arclight-nvidia-settings.desktop usr/share/applications
 arclight-session usr/bin
 arclight-session usr/libexec
 arclight-system-policy usr/libexec

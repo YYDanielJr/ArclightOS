@@ -12,7 +12,7 @@ Breaks: yydaniel-desktop (<< 0.7.0)
 Replaces: yydaniel-desktop (<< 0.7.0)
 Depends: ${misc:Depends}, ${shlibs:Depends}, 7zip (>= 25.01), lightdm, rtkit,
  wlr-randr, kanshi, power-profiles-daemon, polkitd, pkexec, pciutils,
- swayidle, swaylock, wlopm, network-manager, pulseaudio-utils, im-config,
+ swayidle, swaylock, wlopm, network-manager, pulseaudio-utils, im-config, libgtk-layer-shell0 (>= 0.6),
  wayvnc, openssl, accountsservice, rc-gui, pipanel, rasputin, pished, rpinters, merp,
  wf-panel-pi, raindrop, raspi-config, grim, slurp, wl-clipboard,
  udisks2, gvfs, pcmanfm-pi, x-terminal-emulator, util-linux

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=NVIDIA X Server Settings
+Name[zh_CN]=NVIDIA X Server 设置
+Comment=Inspect NVIDIA GPU settings; display modes on Wayland are managed by the compositor
+Comment[zh_CN]=查看 NVIDIA 显卡设置；Wayland 显示模式请在弧光系统设置中调整
+TryExec=nvidia-settings
+Exec=nvidia-settings
+Icon=preferences-system
+Terminal=false
+Categories=Settings;HardwareSettings;
+StartupNotify=true

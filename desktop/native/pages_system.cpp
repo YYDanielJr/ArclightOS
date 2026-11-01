@@ -45,8 +45,6 @@ GtkWidget *App::ime_page() {
                              : "中文拼音输入引擎。",
             button("配置…", [tool] { launch({tool}); }));
   }
-  setting(b, "Wayland 提示",
-          "候选框位置和快捷键还取决于具体应用。切换框架后需要重新登录。");
   return scroll(b);
 }
 GtkWidget *App::packages_page() {
@@ -298,9 +296,8 @@ GtkWidget *App::time_page() {
   auto ntp = toggle(), local_rtc = toggle();
   setting(g, "时区", "输入或选择所在时区。", zones);
   setting(g, "自动校时", "通过网络同步时间。", ntp);
-  setting(g, "硬件时钟使用本地时间（Windows 双系统）",
-          "Windows 默认使用本地硬件时钟。开启后不改变当前系统时间；夏令时及跨时区时"
-          "需要留意校时。关闭则使用 UTC。", local_rtc);
+  setting(g, "硬件时钟使用本地时间",
+          "如果电脑上还安装了Windows操作系统，开启该选项可能有助于多系统间的时钟同步。", local_rtc);
   gtk_widget_set_sensitive(local_rtc, FALSE);
   auto sync = note("");
   gtk_box_pack_start(GTK_BOX(g), sync, FALSE, FALSE, 4);
@@ -601,53 +598,6 @@ GtkWidget *App::security_page() {
           "仍由对应程序和门户处理。");
   return scroll(b);
 }
-GtkWidget *App::storage_page() {
-  auto b = box(), g = section(b, "磁盘与文件系统");
-  struct statvfs v{};
-  if (!statvfs("/", &v)) {
-    char s[128];
-    snprintf(s, sizeof s, "%.1f GiB 可用，共 %.1f GiB",
-             double(v.f_bavail) * v.f_frsize / (1ULL << 30),
-             double(v.f_blocks) * v.f_frsize / (1ULL << 30));
-    setting(g, "根文件系统可用空间", s);
-  }
-  setting(g, "磁盘管理", "健康状态、挂载、格式化和加密卷。",
-          button("磁盘工具…", [] { launch({"gnome-disks"}); }));
-  setting(g, "分区管理", "调整分区前先备份数据。",
-          button("分区工具…", [] { launch({"gparted"}); }));
-  setting(g, "安装磁盘工具", "按需安装图形管理程序。",
-          button("安装…", [this] { install("disks"); }));
-  auto devices = section(b, "已检测到的设备");
-  work(
-      [] {
-        return J::parse(
-            run({"lsblk", "--json", "-o",
-                 "NAME,SIZE,TYPE,FSTYPE,MOUNTPOINTS,MODEL"}))["blockdevices"];
-      },
-      [this, devices](J data) {
-        std::function<void(const J &, int)> add = [&](const J &rows,
-                                                      int depth) {
-          for (auto &d : rows) {
-            auto nullable = [&](const char *k) {
-              return d.contains(k) && d[k].is_string() ? d[k].get<std::string>()
-                                                       : "";
-            };
-            std::string hint = nullable("model") + " · " + nullable("fstype");
-            for (auto &m : d.value("mountpoints", J::array()))
-              if (m.is_string())
-                hint += " · " + m.get<std::string>();
-            setting(devices,
-                    std::string(depth * 2, ' ') + d["name"].get<std::string>() +
-                        " · " + nullable("size"),
-                    hint);
-            add(d.value("children", J::array()), depth + 1);
-          }
-        };
-        add(data, 0);
-        gtk_widget_show_all(devices);
-      });
-  return scroll(b);
-}
 GtkWidget *App::advanced_page() {
   auto b = box(), g = section(b, "通用系统设置");
   auto names =
@@ -777,10 +727,15 @@ GtkWidget *App::about_page() {
   } catch (...) {
   }
   setting(gpu, "图形设备",
-          pci.empty() ? "未发现 PCI 显卡。Hyper-V 合成显卡不通过 PCI 枚举。"
+          pci.empty() ? "未检测到 PCI 显卡"
                       : trim(pci));
   auto driver=trim(read("/sys/module/nvidia/version"));
   setting(gpu,"NVIDIA 驱动",driver.empty()?"未加载":driver+"（已加载）");
+  auto nvidia_settings=g_find_program_in_path("nvidia-settings");
+  if(nvidia_settings)
+    setting(gpu,"NVIDIA 控制面板","分辨率、刷新率与缩放在显示屏页设置。",
+      button("NVIDIA X Server 设置…",[]{launch({"nvidia-settings"});}));
+  g_free(nvidia_settings);
   std::string secure_boot="未检测";
   if(installed("mokutil"))try {
     auto result=run({"mokutil","--sb-state"});

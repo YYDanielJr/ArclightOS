@@ -16,6 +16,7 @@ if os.environ.get('ARCLIGHT_TEST_BUS')!='1':
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('binary',type=Path)
 p.add_argument('output',type=Path)
+p.add_argument('--page',help='Recheck one affected category; default checks all categories')
 a=p.parse_args();a.binary=a.binary.resolve();out=a.output.resolve();out.mkdir(parents=True)
 assert not os.environ.get('ARCLIGHT_VALIDATION_RUNNING'),'Do not nest compositor tests'
 with tempfile.TemporaryDirectory(prefix='al-gui-',dir='/tmp') as tmp:
@@ -56,7 +57,8 @@ with tempfile.TemporaryDirectory(prefix='al-gui-',dir='/tmp') as tmp:
                    'ARCLIGHT_TEST_WINDOW_WIDTH':str(width)}
                 subprocess.run(['wlr-randr','--output','HEADLESS-1','--scale',str(scale)],env=e,check=True)
                 with (directory/'settings.log').open('w') as log:
-                    subprocess.run([str(a.binary),'--smoke-test','--all-pages','--catalog',str(directory/'catalog.json'),
+                    selection=['--page',a.page] if a.page else ['--all-pages']
+                    subprocess.run([str(a.binary),'--smoke-test',*selection,'--catalog',str(directory/'catalog.json'),
                                     '--snapshot-dir',str(directory/'screens')],env=e,stdout=log,stderr=subprocess.STDOUT,
                                    check=True,timeout=240)
                 value=json.loads((directory/'catalog.json').read_text())

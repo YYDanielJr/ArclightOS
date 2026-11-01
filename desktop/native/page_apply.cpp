@@ -46,10 +46,15 @@ static void restore(GtkWidget *w, const J &v) {
     GdkRGBA c{v[0],v[1],v[2],v[3]}; gtk_color_chooser_set_rgba(GTK_COLOR_CHOOSER(w), &c);
   } else if (GTK_IS_FONT_CHOOSER(w)) gtk_font_chooser_set_font(GTK_FONT_CHOOSER(w), v.get<std::string>().c_str());
 }
-GtkWidget *App::save_button(const std::string &, Fn fn) {
+static GtkWidget *save_scope(GtkWidget *w) {
+  auto scope = static_cast<GtkWidget *>(g_object_get_data(G_OBJECT(w), "settings-save-scope"));
+  return scope ? scope : gtk_widget_get_parent(w);
+}
+GtkWidget *App::save_button(const std::string &, Fn fn, GtkWidget *scope) {
   // Retain a scoped save callback without displaying a second Apply control.
   auto w = gtk_button_new();
   gtk_widget_set_no_show_all(w, TRUE);
+  g_object_set_data(G_OBJECT(w), "settings-save-scope", scope);
   saves[w] = std::move(fn);
   g_signal_connect(w, "destroy", G_CALLBACK(+[](GtkWidget *w, gpointer p) {
     static_cast<App *>(p)->saves.erase(w);
@@ -84,7 +89,7 @@ void App::track_page(GtkWidget *w, bool native) {
     if (drafts.count(w)) return;
     if(!native) {
       bool persistent=false;
-      for(auto &[save,fn]:saves) persistent |= inside(w,gtk_widget_get_parent(save));
+      for(auto &[save,fn]:saves) persistent |= inside(w,save_scope(save));
       // Inputs to explicit operations, such as checking an upgrade ISO, are
       // not persistent settings and must not create a no-op Apply draft.
       if(!persistent)return;
@@ -142,6 +147,110 @@ void App::update_apply() {
   for (auto &[w,d] : drafts) dirty |= d.baseline != value(w);
   if (apply_button) gtk_widget_set_sensitive(apply_button,
       !tasks && !applying_page && page_dirty(current_page()));
+  if (pending_button) {
+    auto count = pending_count();
+    auto label = count ? std::to_string(count) + " 项待应用" : "已全部应用";
+    gtk_button_set_label(GTK_BUTTON(pending_button), label.c_str());
+    gtk_widget_set_sensitive(pending_button, count && !tasks && !applying_page);
+    std::string details;
+    for (auto &[w,d] : drafts) if (d.baseline != value(w)) {
+      if (GTK_IS_RADIO_BUTTON(w) && !active(w)) continue;
+      details += draft_location(w) + '\n';
+    }
+    gtk_widget_set_tooltip_text(pending_button, details.empty() ? "更改设置后，在当前标签页应用。" : details.c_str());
+  }
+}
+size_t App::pending_count(GtkWidget *root) {
+  size_t count = 0;
+  for (auto &[w,d] : drafts) if ((!root || inside(w,root)) && d.baseline != value(w)) {
+    // A radio group is one setting, including when its old choice is unset.
+    if (!GTK_IS_RADIO_BUTTON(w) || active(w)) ++count;
+  }
+  return count;
+}
+std::string App::draft_location(GtkWidget *w) {
+  std::vector<std::string> parts;
+  auto label = static_cast<const char *>(g_object_get_data(G_OBJECT(w), "settings-label"));
+  if (label && *label) parts.push_back(label);
+  else if (GTK_IS_BUTTON(w) && gtk_button_get_label(GTK_BUTTON(w)))
+    parts.push_back(gtk_button_get_label(GTK_BUTTON(w)));
+  // Some settings put their chooser/switch inside an action container. The
+  // row label belongs to that container, not the toolkit control itself.
+  for(auto parent=gtk_widget_get_parent(w); parts.empty() && parent; parent=gtk_widget_get_parent(parent)) {
+    if(GTK_IS_FRAME(parent) || GTK_IS_NOTEBOOK(parent))break;
+    auto title=static_cast<const char*>(g_object_get_data(G_OBJECT(parent),"settings-label"));
+    if(title && *title)parts.push_back(title);
+  }
+  if(parts.empty()) {
+    // Pi plugins use their own row builders. Prefer their mnemonic label,
+    // then a neighbouring label, without ever displaying entry/password data.
+    auto labels=gtk_widget_list_mnemonic_labels(w);
+    if(labels && GTK_IS_LABEL(labels->data)) parts.push_back(gtk_label_get_text(GTK_LABEL(labels->data)));
+    g_list_free(labels);
+    for(auto branch=w; parts.empty() && gtk_widget_get_parent(branch); branch=gtk_widget_get_parent(branch)) {
+      auto parent=gtk_widget_get_parent(branch);
+      if(GTK_IS_FRAME(parent) || GTK_IS_NOTEBOOK(parent))break;
+      if(!GTK_IS_CONTAINER(parent))continue;
+      auto children=gtk_container_get_children(GTK_CONTAINER(parent));
+      for(auto child=children;child;child=child->next) if(child->data!=branch && GTK_IS_LABEL(child->data)) {
+        auto text=gtk_label_get_text(GTK_LABEL(child->data));
+        if(text && *text) { parts.push_back(text); break; }
+      }
+      g_list_free(children);
+    }
+  }
+  for (auto child=w, parent=gtk_widget_get_parent(w); parent;
+       child=parent, parent=gtk_widget_get_parent(parent)) {
+    if (GTK_IS_FRAME(parent) && gtk_frame_get_label(GTK_FRAME(parent)))
+      parts.push_back(gtk_frame_get_label(GTK_FRAME(parent)));
+    if (GTK_IS_NOTEBOOK(parent)) {
+      auto title=gtk_notebook_get_tab_label_text(GTK_NOTEBOOK(parent),child);
+      if (title) parts.push_back(title);
+    }
+  }
+  for (auto &c : categories()) if (pages.count(c.id) && inside(w,pages.at(c.id))) {
+    parts.push_back(c.title); break;
+  }
+  std::reverse(parts.begin(),parts.end());
+  std::string result;
+  for (auto &p : parts) if (!p.empty()) { if (!result.empty()) result += " › "; result += p; }
+  return result.empty() ? "设置项目" : result;
+}
+void App::show_pending() {
+  auto popover=gtk_popover_new(pending_button), list=box();
+  for (auto &[w,d] : drafts) if (d.baseline != value(w)) {
+    if (GTK_IS_RADIO_BUTTON(w) && !active(w)) continue;
+    auto row=button(draft_location(w),[this,w,popover] {
+      // The popover closes before another page can refresh these controls.
+      for (auto &c : categories()) if (pages.count(c.id) && inside(w,pages.at(c.id))) {
+        gtk_list_box_select_row(GTK_LIST_BOX(navigation),GTK_LIST_BOX_ROW(rows.at(c.id))); break;
+      }
+      for (auto child=w, parent=gtk_widget_get_parent(w); parent;
+           child=parent, parent=gtk_widget_get_parent(parent))
+        if (GTK_IS_NOTEBOOK(parent)) gtk_notebook_set_current_page(GTK_NOTEBOOK(parent),gtk_notebook_page_num(GTK_NOTEBOOK(parent),child));
+      gtk_widget_grab_focus(w); update_apply(); gtk_popover_popdown(GTK_POPOVER(popover));
+    });
+    auto label=gtk_bin_get_child(GTK_BIN(row));
+    gtk_label_set_line_wrap(GTK_LABEL(label),TRUE);
+    gtk_label_set_line_wrap_mode(GTK_LABEL(label),PANGO_WRAP_WORD_CHAR);
+    gtk_label_set_max_width_chars(GTK_LABEL(label),32);
+    gtk_label_set_xalign(GTK_LABEL(label),0);
+    gtk_widget_set_halign(row,GTK_ALIGN_FILL);
+    gtk_box_pack_start(GTK_BOX(list),row,FALSE,FALSE,0);
+  }
+  auto scroller=scroll(list); gtk_widget_set_size_request(scroller,380,220);
+  gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scroller),GTK_POLICY_NEVER,GTK_POLICY_AUTOMATIC);
+  gtk_container_add(GTK_CONTAINER(popover),scroller);
+  g_signal_connect(popover,"closed",G_CALLBACK((+[](GtkWidget *w,gpointer) {
+    // Keep the widget alive until GTK has finished closing its popup window.
+    if(g_object_get_data(G_OBJECT(w),"destroy-pending"))return;
+    g_object_set_data(G_OBJECT(w),"destroy-pending",GINT_TO_POINTER(1));
+    g_object_ref(w);
+    g_idle_add_full(G_PRIORITY_DEFAULT_IDLE,+[](gpointer p)->gboolean {
+      gtk_widget_destroy(GTK_WIDGET(p));return G_SOURCE_REMOVE;
+    },w,g_object_unref);
+  })),nullptr);
+  gtk_widget_show_all(popover); gtk_popover_popup(GTK_POPOVER(popover));
 }
 void App::discard_page(GtkWidget *root) {
   loading_controls = true;
@@ -159,7 +268,7 @@ void App::apply_page(GtkWidget *root) {
     changed.push_back({w,value(w)});
   std::vector<std::pair<GtkWidget *, Fn>> queue;
   for (auto &[w,fn] : saves) if (inside(w,root) && gtk_widget_is_sensitive(w)) {
-    auto scope = gtk_widget_get_parent(w);
+    auto scope = save_scope(w);
     if (std::any_of(changed.begin(),changed.end(),[&](auto &c) { return inside(c.first,scope); }))
       queue.push_back({w,fn});
   }
@@ -168,7 +277,18 @@ void App::apply_page(GtkWidget *root) {
   try {
     // Only dirty scopes on this page run. Finish each asynchronous save before
     // starting the next, so auth/validation failures remain visible and dirty.
-    for (auto &[w,fn] : queue) fn();
+    require(!queue.empty() || std::any_of(changed.begin(),changed.end(),[&](auto &c) {
+      return drafts.count(c.first) && drafts.at(c.first).native;
+    }), "这些更改当前无法保存，请检查页面提示。");
+    for (auto &[w,fn] : queue) {
+      auto scope=save_scope(w);
+      fn();
+      // A later scope may fail authentication or validation. Already saved
+      // settings must disappear from the pending list immediately.
+      for (auto &[control,v] : changed) if (drafts.count(control) &&
+          !drafts.at(control).native && inside(control,scope))
+        drafts.at(control).baseline=value(control);
+    }
     for (auto &[w,v] : changed) {
       auto it = drafts.find(w);
       if (it == drafts.end() || !it->second.native) continue;
@@ -179,6 +299,7 @@ void App::apply_page(GtkWidget *root) {
       else g_signal_emit_by_name(w,signal.c_str());
       if (drafts.count(w)) for (auto h : handlers)
         if (g_signal_handler_is_connected(w,h)) g_signal_handler_block(w,h);
+      if (drafts.count(w)) drafts.at(w).baseline=value(w);
     }
     bool reboot=false;
     for(auto &[id,plugin]:plugins) {
@@ -187,7 +308,6 @@ void App::apply_page(GtkWidget *root) {
         for(auto &[w,v]:changed)affected |= inside(w,page);
       if(affected)reboot |= reinterpret_cast<int (*)()>(dlsym(plugin.handle,"reboot_needed"))()!=0;
     }
-    for (auto &[w,v] : changed) if (drafts.count(w)) drafts.at(w).baseline = value(w);
     status(reboot?"本页设置已应用，部分更改需要重启后生效。":"本页设置已应用。");
   } catch (...) {
     applying_page = false;
@@ -256,6 +376,54 @@ int page_apply_tests() {
   gtk_stack_set_visible_child(GTK_STACK(a.stack),notebook);a.track_page(notebook);
   gtk_entry_set_text(GTK_ENTRY(l),"L");gtk_entry_set_text(GTK_ENTRY(r),"R");a.apply_native();
   test(ls==1&&rs==0&&!a.page_dirty(left)&&a.page_dirty(right),"notebook tabs have independent Apply scope");
+  test(a.pending_count()==1 && a.pending_count(right)==1,"pending count includes drafts on hidden tabs");
+  // Exercise the actual display page: its save control is a sibling of the
+  // per-output group. The former parent-only inference missed every edit.
+  auto display=a.display_page(); a.pages["display"]=display;
+  gtk_stack_add_named(GTK_STACK(a.stack),display,"display");
+  gtk_widget_show_all(display); a.track_page(display);
+  gtk_stack_set_visible_child(GTK_STACK(a.stack),display);
+  GtkWidget *scale=nullptr,*mode=nullptr;
+  for(auto &[w,d]:a.drafts) if(inside(w,display)) {
+    auto label=static_cast<const char*>(g_object_get_data(G_OBJECT(w),"settings-label"));
+    if(label && std::string(label)=="缩放（%）")scale=w;
+    if(label && std::string(label)=="分辨率与刷新率")mode=w;
+  }
+  test(scale && mode && !a.page_dirty(display),"real display page tracks scale and mode without initial false drafts");
+  auto old=decimal(scale); gtk_spin_button_set_value(GTK_SPIN_BUTTON(scale),old+25);
+  test(a.page_dirty(display) && gtk_widget_get_sensitive(a.apply_button),"display scale edit enables header Apply");
+  test(a.pending_count(display)==1 && a.draft_location(scale).find("显示屏")!=std::string::npos && a.draft_location(scale).find("缩放")!=std::string::npos,"display pending count and location identify the changed field");
+  a.discard_page(display);
+  test(!a.page_dirty(display) && decimal(scale)==old && a.pending_count()==1,"display revert removes only its own pending changes");
+  auto wait=[](int ms){auto end=g_get_monotonic_time()+ms*1000;while(g_get_monotonic_time()<end){while(g_main_context_iteration(nullptr,FALSE)){}g_usleep(1000);}};
+  auto observed=a.box();gtk_stack_add_named(GTK_STACK(a.stack),observed,"observed");gtk_widget_show_all(observed);
+  int results=0;a.background(observed,[]{g_usleep(20000);return J(1);},[&](J){++results;});wait(150);
+  test(results==1 && a.tasks==0,"background refresh does not block Apply with foreground tasks");
+  a.background(observed,[]{g_usleep(60000);return J(1);},[&](J){++results;});gtk_widget_destroy(observed);wait(150);
+  test(results==1,"destroyed page rejects an asynchronous refresh result");
+  auto polling=a.box();gtk_stack_add_named(GTK_STACK(a.stack),polling,"polling");gtk_widget_show_all(polling);gtk_stack_set_visible_child(GTK_STACK(a.stack),polling);
+  int polls=0,leaves=0;a.poll_page(polling,1,[&]{++polls;},[&]{++leaves;});wait(1250);
+  test(polls>0,"visible page starts continuous polling automatically");
+  gtk_stack_set_visible_child(GTK_STACK(a.stack),display);wait(1250);auto stopped=polls;wait(1100);
+  test(leaves==1 && polls==stopped,"leaving a page stops its automatic polling");
+  gtk_widget_destroy(polling);wait(100);
+  test(polls==stopped,"destroying a page removes its polling source");
+  auto composite=a.box();auto chooser=a.combo({{"first","First"},{"second","Second"}},"first");
+  gtk_box_pack_start(GTK_BOX(composite),chooser,FALSE,FALSE,0);add(composite,[]{});
+  a.setting(g1,"网页浏览器","",composite);gtk_widget_show_all(one);a.track_page(one);
+  gtk_combo_box_set_active_id(GTK_COMBO_BOX(chooser),"second");
+  test(a.draft_location(chooser).find("网页浏览器")!=std::string::npos,"composite settings retain their specific row name in pending locations");
+  test(a.pending_count(composite)==1,"a nested setting contributes one pending item");
+  gchar *original_theme=nullptr;g_object_get(gtk_settings_get_default(),"gtk-icon-theme-name",&original_theme,nullptr);
+  g_object_set(gtk_settings_get_default(),"gtk-icon-theme-name","PiXtrix",nullptr);
+  for(auto name:{"drive-removable-media-usb","media-flash-sd-mmc","drive-harddisk-solidstate","phone"}) {
+    auto image=a.device_icon(name);g_object_ref_sink(image);const gchar *resolved=nullptr;GtkIconSize size;
+    gtk_image_get_icon_name(GTK_IMAGE(image),&resolved,&size);GError *error=nullptr;
+    auto pixels=resolved?gtk_icon_theme_load_icon(gtk_icon_theme_get_default(),resolved,32,GTK_ICON_LOOKUP_FORCE_SIZE,&error):nullptr;
+    test(pixels!=nullptr,(std::string("PiXtrix renders a real device icon for ")+name).c_str());
+    if(pixels)g_object_unref(pixels);g_clear_error(&error);gtk_widget_destroy(image);g_object_unref(image);
+  }
+  g_object_set(gtk_settings_get_default(),"gtk-icon-theme-name",original_theme,nullptr);g_free(original_theme);
   gtk_widget_destroy(a.window);return 0;
 }
 }

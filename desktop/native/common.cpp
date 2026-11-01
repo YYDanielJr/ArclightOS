@@ -269,6 +269,35 @@ J properties(const char *name, const std::string &path, const char *iface) {
   g_variant_unref(v);
   return j;
 }
+std::string active_graphical_session() {
+  const char *service="org.freedesktop.login1", *iface="org.freedesktop.login1.Session";
+  auto valid=[&](const std::string &path) {
+    auto p=properties(service,path,iface);
+    auto type=p.value("Type","");
+    auto seat=p.value("Seat",J::array({"","/"}))[0].get<std::string>();
+    return p.at("User")[0]==getuid() && p.value("Active",false) && !p.value("Remote",true) &&
+      (type=="wayland" || type=="x11") && !seat.empty() && (env("XDG_SEAT").empty() || env("XDG_SEAT")==seat);
+  };
+  try {
+    auto result=dbus(service,"/org/freedesktop/login1","org.freedesktop.login1.Manager","GetSessionByPID",g_variant_new("(u)",guint(getpid())),5000);
+    auto path=unpack(result)[0].get<std::string>(); g_variant_unref(result);
+    if(valid(path))return path;
+  } catch(...) {}
+  // systemd user services may have no PID-to-session association. Accept only
+  // this user's active local graphical session, never a greeter/SSH session.
+  auto result=dbus(service,"/org/freedesktop/login1","org.freedesktop.login1.Manager","ListSessions",nullptr,5000);
+  auto sessions=unpack(result)[0];g_variant_unref(result);
+  std::vector<std::string> candidates;
+  for(auto &row:sessions) if(row[1]==getuid() && row[3]!="") {
+    auto path=row[4].get<std::string>();
+    if(valid(path)) {
+      if(!env("XDG_SESSION_ID").empty() && row[0]==env("XDG_SESSION_ID"))return path;
+      candidates.push_back(path);
+    }
+  }
+  require(candidates.size()==1,"无法唯一确定当前用户活动的本地图形会话。");
+  return candidates.front();
+}
 std::string privileged(const std::string &action, const J &data) {
   return run({"pkexec", "/usr/libexec/arclight-system-policy", action},
              data.dump() + "\n", 1800);

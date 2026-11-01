@@ -1,3 +1,25 @@
+arclight-desktop (0.9.1) unstable; urgency=medium
+
+  * Organize network tabs and continuously discover Wi-Fi and Bluetooth
+    devices while their pages are visible, preserving staged settings.
+  * Use audio device dropdowns and simplify settings descriptions.
+  * Add native hierarchical UDisks storage management and safe device
+    removal, including encrypted volumes and remote/phone mounts.
+  * Use rectangular Pi-themed OSDs showing the active device name.
+
+ -- YYDaniel <yydaniel@localhost>  Sun, 01 Nov 2026 00:21:28 +0800
+
+arclight-desktop (0.9.0) unstable; urgency=medium
+
+  * Track display drafts across explicit save scopes and show the pending
+    setting count with page locations and navigation.
+  * Add a native Pi-themed Wayland OSD for volume, microphone and brightness
+    shortcuts while preserving custom keyboard bindings.
+  * Expose the installed NVIDIA settings application in the desktop menu
+    and About page, with the Wayland display management scope explained.
+
+ -- YYDaniel <yydaniel@localhost>  Sat, 31 Oct 2026 23:15:00 +0800
+
 arclight-desktop (0.8.0) unstable; urgency=medium
 
   * Use the native 7-Zip engine for real encoder input/output progress,

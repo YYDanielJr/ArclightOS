@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 #include "common.hpp"
 #include "archive.hpp"
+#include "storage.hpp"
 #include <archive.h>
 #include <archive_entry.h>
 #include <zlib.h>
@@ -56,6 +57,32 @@ int main(int argc, char **argv) {
            "restore disabled output and its mode");
       return 0;
     }
+    auto bytes=[](std::string text){J result=J::array();for(unsigned char c:text)result.push_back(c);result.push_back(0);return result;};
+    J storage=J::object();std::string ud="/org/freedesktop/UDisks2/",ub="org.freedesktop.UDisks2.";
+    storage[ud+"drives/usb"][ub+"Drive"]={{"Model","USB Test"},{"ConnectionBus","usb"},{"CanPowerOff",true},{"Size",uint64_t(1024)}};
+    storage[ud+"block_devices/sda"][ub+"Block"]={{"Drive",ud+"drives/usb"},{"PreferredDevice",bytes("/dev/sda")},{"Size",uint64_t(1024)}};
+    storage[ud+"block_devices/sda"][ub+"PartitionTable"]={{"Type","gpt"}};
+    for(auto n:{1,2}) {
+      auto path=ud+"block_devices/sda"+std::to_string(n);storage[path][ub+"Block"]={{"Drive",ud+"drives/usb"},{"PreferredDevice",bytes("/dev/sda"+std::to_string(n))},{"IdType","ext4"},{"IdLabel","Part "+std::to_string(n)},{"Size",uint64_t(512)}};
+      storage[path][ub+"Partition"]={{"Table",ud+"block_devices/sda"}};storage[path][ub+"Filesystem"]={{"MountPoints",J::array({bytes("/media/test/"+std::to_string(n))})}};
+    }
+    auto model=storage_model(storage);
+    test(model.size()==1 && model[0]["parts"].size()==2,"storage groups partitions beneath one physical drive");
+    test(model[0]["icon"]=="drive-removable-media-usb" && model[0]["device"]=="/dev/sda","storage identifies USB drive and decodes device bytes");
+    test(model[0]["parts"][0]["mounted"].get<bool>() && !model[0]["parts"][0]["usage_known"].get<bool>(),"storage distinguishes mounted state from unknown usage");
+    test(storage_eject_plan(model,ud+"drives/usb").size()==1,"safe eject plans all partitions of the target drive");
+    auto protected_storage=storage;protected_storage[ud+"block_devices/sda1"][ub+"Filesystem"]["MountPoints"]=J::array({bytes("/")});
+    protected_storage[ud+"block_devices/sda1"][ub+"Block"]["HintIgnore"]=true;
+    auto system_model=storage_model(protected_storage);
+    rejected([&]{storage_eject_plan(system_model,ud+"drives/usb");},"reject eject of a drive containing root even when automount ignores it");
+    protected_storage=storage;protected_storage[ud+"block_devices/sda2"][ub+"Swapspace"]={{"Active",true}};
+    rejected([&]{storage_eject_plan(storage_model(protected_storage),ud+"drives/usb");},"reject eject of a drive with active swap");
+    auto siblings=model;auto second=model[0];second["path"]=ud+"drives/usb2";model[0]["sibling"]="reader";second["sibling"]="reader";siblings=J::array({model[0],second});
+    test(storage_eject_plan(siblings,ud+"drives/usb").size()==2,"safe eject includes sibling drives sharing one USB reader");
+    siblings[1]["protected"]=true;rejected([&]{storage_eject_plan(siblings,ud+"drives/usb");},"reject eject when a sibling drive is used by the system");
+    auto encrypted_storage=storage;auto crypto=ud+"block_devices/dm_2d0";encrypted_storage[crypto][ub+"Block"]={{"Drive","/"},{"PreferredDevice",bytes("/dev/dm-0")},{"CryptoBackingDevice",ud+"block_devices/sda2"},{"Size",uint64_t(500)}};encrypted_storage[crypto][ub+"Filesystem"]={{"MountPoints",J::array()}};
+    test(storage_model(encrypted_storage)[0]["parts"].size()==3,"storage attaches an unlocked crypto child to its physical drive");
+    test(storage_size(1024)=="1.0 KiB","storage uses consistent binary capacity units");
     J items = J::array({{{"name", "HEADLESS-1"},
                          {"description", "Test monitor"},
                          {"enabled", true},
@@ -163,6 +190,10 @@ int main(int argc, char **argv) {
     test(read(config()/"labwc/rc.xml")==first_defaults && first_defaults.find("keep-user-screenshot")!=first_defaults.npos &&
          first_defaults.find("C-A-a")!=first_defaults.npos,
          "desktop defaults preserve occupied screenshot binding and are idempotent");
+    auto keys=hotkey_xml("<labwc_config><keyboard><keybind key=\"XF86AudioRaiseVolume\"><action name=\"Execute\" command=\"wfpanelctl volumepulse volu\"/></keybind><keybind key=\"XF86AudioMute\"><action name=\"Execute\"><command>my-custom-mute</command></action></keybind></keyboard><mouse><keep/></mouse></labwc_config>");
+    test(keys.find("arclight-osd volume-up")!=keys.npos && keys.find("arclight-osd brightness-down")!=keys.npos && keys.find("arclight-osd mic-mute")!=keys.npos,"OSD upgrades stock audio and adds missing brightness and microphone bindings");
+    test(keys.find("my-custom-mute")!=keys.npos && keys.find("arclight-osd volume-mute")==keys.npos && keys.find("<keep/>")!=keys.npos,"OSD preserves user shortcuts and unrelated compositor settings");
+    test(hotkey_xml(keys)==keys,"OSD shortcut migration is idempotent");
     test(read(config()/"libfm/libfm.conf").find("x-terminal-emulator %s")!=std::string::npos,
          "file manager receives a default terminal without shell interpolation");
     write(config() / "labwc/environment", "KEEP_VALUE=1\n");

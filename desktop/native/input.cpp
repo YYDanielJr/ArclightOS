@@ -111,6 +111,48 @@ void touchpad_save(const J &values) {
   write(path, touchpad_xml(before, values));
   run({"labwc", "--reconfigure"});
 }
+std::string hotkey_xml(const std::string &original) {
+  auto d=parse(original);
+  auto keys=ensure(xmlDocGetRootElement(d.get()),"keyboard");
+  const std::map<std::string,std::string> commands={
+    {"XF86AudioRaiseVolume","volume-up"},{"XF86AudioLowerVolume","volume-down"},
+    {"XF86AudioMute","volume-mute"},{"XF86AudioMicMute","mic-mute"},
+    {"XF86MonBrightnessUp","brightness-up"},{"XF86MonBrightnessDown","brightness-down"}};
+  for(auto &[key,command]:commands) {
+    xmlNode *binding=nullptr;
+    for(auto n=keys->children;n;n=n->next) {
+      auto prop=xmlGetProp(n,BAD_CAST "key");
+      if(prop && key==reinterpret_cast<char*>(prop)) binding=n;
+      xmlFree(prop);
+    }
+    if(binding) {
+      // Upgrade the stock Pi volume actions only. User-defined shortcuts,
+      // including bindings with multiple actions, remain unchanged.
+      auto action=child(binding,"action");
+      int actions=0; for(auto n=binding->children;n;n=n->next) if(n->type==XML_ELEMENT_NODE) ++actions;
+      auto attr=action?xmlGetProp(action,BAD_CAST "command"):nullptr;
+      auto name=action?xmlGetProp(action,BAD_CAST "name"):nullptr;
+      auto node=child(action,"command");
+      auto content=node?xmlNodeGetContent(node):nullptr;
+      std::string old=attr?reinterpret_cast<char*>(attr):content?reinterpret_cast<char*>(content):"";
+      std::string expected=command=="volume-up"?"volu":command=="volume-down"?"vold":"mute";
+      bool stock=key.find("XF86Audio")==0 && command!="mic-mute" && actions==1 && name &&
+        !xmlStrcmp(name,BAD_CAST "Execute") && old=="wfpanelctl volumepulse "+expected;
+      xmlFree(attr); xmlFree(name); xmlFree(content);
+      if(!stock) continue;
+      xmlUnlinkNode(action); xmlFreeNode(action);
+    } else {
+      binding=xmlNewChild(keys,keys->ns,BAD_CAST "keybind",nullptr);
+      xmlSetProp(binding,BAD_CAST "key",BAD_CAST key.c_str());
+    }
+    auto action=xmlNewChild(binding,binding->ns,BAD_CAST "action",nullptr);
+    xmlSetProp(action,BAD_CAST "name",BAD_CAST "Execute");
+    xmlSetProp(action,BAD_CAST "command",BAD_CAST ("arclight-osd "+command).c_str());
+  }
+  xmlChar *mem=nullptr; int size=0;
+  xmlDocDumpFormatMemoryEnc(d.get(),&mem,&size,"UTF-8",1);
+  std::string result(reinterpret_cast<char*>(mem),size); xmlFree(mem); return result;
+}
 void desktop_defaults() {
   // Adopt the native archive manager for the previous distribution default,
   // while preserving a user's chosen alternative.
@@ -149,7 +191,10 @@ void desktop_defaults() {
   xmlChar *mem = nullptr; int size = 0;
   xmlDocDumpFormatMemoryEnc(d.get(), &mem, &size, "UTF-8", 1);
   std::string result(reinterpret_cast<char *>(mem), size); xmlFree(mem);
-  if (result != read(path)) write(path, result);
+  result=hotkey_xml(result);
+  if (result != read(path)) {
+    write(path, result);
+  }
   auto fm = config() / "libfm/libfm.conf";
   GKeyFile *kf = g_key_file_new();
   g_key_file_load_from_file(kf, fm.c_str(), G_KEY_FILE_KEEP_COMMENTS, nullptr);
