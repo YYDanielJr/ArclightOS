@@ -49,3 +49,7 @@ python3 scripts/build-upgrade-bundle.py \
 ```
 
 输出归档、独立 SHA256 和清单。拒绝覆写、缺失/变化的证据，排除调试包和 `linux-libc-dev`。GitHub 单附件须小于 2 GiB；超限时应设计有哈希绑定的独立源码资产，不能悄悄漏包。本轮不代用户上传 Release 或部署 APT 服务。
+
+输出名也可使用 `.tar.zst`，构建器调用本机 `zstd` 以两个线程压缩；`.tar.xz` 保留兼容。原生升级器支持这两种格式。首次旧桌面迁移使用 Zstandard 包时，可用 `tar --zstd -xOf /绝对路径/更新.tar.zst upgrade/bootstrap.sh` 提取相同引导脚本。
+
+无论组件来自保留 receipt 还是 `--add-build`，新 ABI 的 Ascalon image/headers 均使用 `ascalon-installed` 安装条件。不能用 `if-installed` 判断一个尚未安装的新 ABI；否则元包会升级而其 image/headers 被跳过。桌面及内核元包使用 `always`，其余保留的本地组件默认仅在已安装时升级。

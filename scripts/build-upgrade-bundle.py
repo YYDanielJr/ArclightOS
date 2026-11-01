@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
-"""Package source-built project updates as a verified tar.xz release asset.
+"""Package source-built project updates as a verified tar.xz/tar.zst asset.
 
 Unmodified Debian/Pi APT binaries are excluded. A previous mixed-image receipt
 supplies retained local build provenance; newer recorded builds override it.
 """
 import argparse
+import contextlib
 from email.parser import Parser
 import hashlib
 import json
@@ -61,17 +62,44 @@ def source_identity(control):
     return match[1],match[2] or control['Version']
 
 
-def package_record(path, provenance, proof, install_when='if-installed'):
+def package_record(path, provenance, proof, install_when=None):
     control=fields(path);source,version=source_identity(control)
     if control['Architecture'] not in ('amd64','all') or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.+%~-]*\.deb',path.name):
         raise ValueError('Unsafe package filename or architecture: '+str(path))
+    if install_when is None:
+        install_when=('ascalon-installed' if source=='ascalon-linux' else
+                      'always' if source in ('arclight-desktop','ascalon-kernel') else 'if-installed')
     return dict(name=control['Package'],version=control['Version'],architecture=control['Architecture'],
         source=source,source_version=version,file='pool/'+path.name,bytes=path.stat().st_size,sha256=sha(path),
         provenance=provenance,build_proof=proof,install_when=install_when,_path=path)
 
 
+@contextlib.contextmanager
+def bundle_archive(part, output):
+    if output.name.endswith('.tar.xz'):
+        with tarfile.open(part,'x:xz',preset=1) as archive:
+            yield archive
+        return
+    with part.open('xb') as destination:
+        compressor=subprocess.Popen(['zstd','-q','-3','-T2','-c'],stdin=subprocess.PIPE,stdout=destination)
+        try:
+            with tarfile.open(fileobj=compressor.stdin,mode='w|') as archive:
+                yield archive
+            compressor.stdin.close()
+            if compressor.wait()!=0:raise ValueError('Zstandard compression failed')
+        except BaseException:
+            with contextlib.suppress(OSError):compressor.stdin.close()
+            if compressor.poll() is None:compressor.terminate()
+            compressor.wait()
+            raise
+
+
 def build(args):
     output=args.output.resolve()
+    if not output.name.endswith(('.tar.xz','.tar.zst')):
+        raise ValueError('Use a .tar.xz or .tar.zst output filename')
+    if output.name.endswith('.tar.zst') and not shutil.which('zstd'):
+        raise ValueError('The zstd tool is required for .tar.zst output')
     if output.exists() or output.with_name(output.name+'.sha256').exists():
         raise ValueError('Refusing to overwrite a frozen upgrade bundle')
     receipt=json.loads(args.receipt.read_text())
@@ -131,8 +159,7 @@ def build(args):
                 if len(matches)!=1: raise ValueError('Kernel meta-package is absent from the successful build receipt')
                 proof=dict(kind='recorded-metapackage-build',file=artifact_file.name,sha256=sha(artifact_file))
             else: raise ValueError('Missing matching buildinfo/source evidence: '+str(path))
-            record=package_record(path,'source-build',proof,
-                'ascalon-installed' if source=='ascalon-linux' else 'always' if source in ('arclight-desktop','ascalon-kernel') else 'if-installed')
+            record=package_record(path,'source-build',proof)
             additions.setdefault(source,[]).append(record)
         sources += [p for p in directory.iterdir() if p.is_file() and p.suffix in ('.dsc','.buildinfo','.changes')]
         sources += list(directory.glob('*.tar.xz'))
@@ -182,7 +209,7 @@ def build(args):
         def metadata(item):
             item.uid=item.gid=0;item.uname=item.gname='';item.mtime=1793491200
             return item
-        with tarfile.open(part,'x:xz',preset=1) as tar:
+        with bundle_archive(part,output) as tar:
             # Manifest first helps consumers inspect without extracting sources.
             tar.add(stage/'upgrade/manifest.json',arcname='upgrade/manifest.json',filter=metadata)
             files=sorted(stage.rglob('*'),key=lambda p:(not p.relative_to(stage).as_posix().startswith('upgrade/'),p.as_posix()))
