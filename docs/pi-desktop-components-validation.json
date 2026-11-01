@@ -1,0 +1,26 @@
+{
+  "passed": true,
+  "validation_scope": "uefi-live-latest-kernel-and-connect",
+  "iso": "arclightos-trixie-amd64-20261101-0.10.0-pi-r1.iso",
+  "iso_bytes": 3348164608,
+  "iso_sha256": "daad34386d26fd2e90b4e898472faca77c2fcd307aabbc110824856dcc905c73",
+  "actual": {
+    "kernel": "7.3.1-ascalonkernel",
+    "uefi": true,
+    "package_version": "2.14.0",
+    "package_status": "installed",
+    "command_version": "rpi-connect 2.14.0 (revision 13570a981f45b5f47c952017c617e6f454fd4dbf) [amd64]",
+    "panel_connect": true,
+    "passed": true
+  },
+  "network_devices": [],
+  "physical_disks_attached": false,
+  "acceleration": "KVM",
+  "new_iso_installation_tested": false,
+  "bios_tested": false,
+  "fallback_tested": false,
+  "remote_account_linked": false,
+  "remote_end_to_end_tested": false,
+  "unchanged_parent_packages": 1883,
+  "authenticated_native_packages": 1853
+}

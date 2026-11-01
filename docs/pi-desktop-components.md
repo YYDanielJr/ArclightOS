@@ -41,3 +41,11 @@
 ## 本轮验证范围调整
 
 用户明确要求本轮只检查 UEFI 下最新 7.3.1 内核启动后存在 Connect，不重复 BIOS、回退内核或离线安装。使用已验收 0.10.0 ISO 增量加入认证官方包，不重新安装全部 1883 个原有包，也不重编译未变的组件。`derive-driver-helper-root.py --native-addition rpi-connect` 要求全部既有包版本/哈希不变、差集精确为指定官方 APT 包。保留原镜像的六项历史验收；新 ISO 只报告本轮实际执行的 UEFI Live 范围，不继承为六项新验收通过。
+
+## 新 ISO 交付结果
+
+`dist/20261101-0.10.0-pi-r1/arclightos-trixie-amd64-20261101-0.10.0-pi-r1.iso`，**3,348,164,608 字节**，SHA256 **`daad34386d26fd2e90b4e898472faca77c2fcd307aabbc110824856dcc905c73`**。Live 1884 包，1853 个认证官方 APT 包、31 个保留源码构建证据的本地包；全部 1883 个原有包的版本/载荷哈希不变。
+
+按用户指定只运行一次 KVM UEFI Live：实际 `uname` 为 `7.3.1-ascalonkernel`，Connect 的 dpkg 状态为 installed / 2.14.0，`rpi-connect --version` 正常返回 amd64 2.14.0，系统面板配置包含 Connect；实际查看桌面及原生关于页。没有重复 BIOS、回退内核或安装测试，也没有新做端到端远程连接。本机与镜像均不预置账号身份。
+
+同目录提供专用 `arclight-pi-components.sha256`、当前镜像输入/签名认证、限定范围验证报告、工程源码及增量装配记录。`arclight-retained-component-*` 是原 0.10.0 本地组件未变的对应源码和历史证据；不能把里面的旧六项报告视作新镜像完成六项验收。输入 r2 冻结于验证前，最终维护源码另存，旧输入不覆盖。

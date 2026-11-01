@@ -366,3 +366,12 @@ Get-FileHash -Algorithm SHA256 -LiteralPath dist/astgenne-os-trixie-amd64.iso
 `pishutdown 0.44` 与 `raspberrypi-net-mods 1.4.5` 虽出现在原 ISO 的安装数据库，但本次官方新签名索引及原 ISO 保留的索引均只提供 0.43/1.4.4；不获取未经认证的旧 DEB，解除 pin 后跟随 APT 更新。`rpi-connect-lite` 不与完整 Connect 同装。当前策略的入口共用 `scripts/pi_desktop_policy.py`；`prepare-open-base.py` 在当前策略下转为官方 APT 安装，不执行旧移除分支。历史替代文档不能当作继续禁用 Connect 的指令。
 
 新镜像独立 ID `20261101-0.10.0-pi-r1`，桌面/内核等本地二进制版本保持不变，旧镜像及冻结清单不覆盖。构建及实际验证结果待新记录；详见 `docs/pi-desktop-components.md`。
+
+
+### 本轮增量镜像交付与验证偏好
+
+用户随后明确缩小验证范围：仅验证 UEFI 下最新内核与恢复的包，不重复耗时的完整矩阵。新 ISO `arclightos-trixie-amd64-20261101-0.10.0-pi-r1.iso`，3,348,164,608 字节，SHA256 `daad34386d26fd2e90b4e898472faca77c2fcd307aabbc110824856dcc905c73`。由已验收 0.10.0 ISO 增量加入认证 Connect，原 1883 个包版本/哈希不变；Live 1884（1853 官方 APT + 31 保留源码构建）。只启动一次 KVM UEFI Live，确认运行 7.3.1-ascalonkernel、Connect installed/2.14.0、命令可执行及面板入口；实际查看桌面和原生关于页。新镜像没有重验 BIOS、回退内核、完整安装或真实远端连接。
+
+交付在 `dist/20261101-0.10.0-pi-r1/`，以专用 `arclight-pi-components.sha256` 和限定范围报告为准；未调用强制六项的新完整发行验收器，不填造报告。原有本地组件源码及历史构建记录以 retained 名称保留，不能冒充本轮六项通过。工作区 `.local/official-components-20261101/`。
+
+后续优先按实际改动做最小充分的增量验证，不因旧模板列出六项就机械重复；改动引导/安装器等路径或用户要求完整发行验收时，再选择对应范围并如实记录。未测范围保留未测标记。

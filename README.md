@@ -8,6 +8,8 @@ AscalonKernel（阿斯卡纶内核）基于锁定的 Linux 上游源码，采用
 
 stable 小版本的一键准备、补丁应用、构建和安装见 [内核自动更新](docs/kernel-automatic-updates.md)。日常项目组件更新改用 GitHub Release 压缩包，使用方法及旧 ISO 升级器迁移见 [压缩包升级](docs/offline-upgrade.md)；Debian/Pi 原生包继续通过正常 APT 更新。
 
+默认预装官方 rpi-connect 的增量 ISO 见 [Pi 桌面组件恢复](docs/pi-desktop-components.md)，本轮按要求仅验证 UEFI / 7.3.1 / Connect。
+
 完整 ISO 与 TAR.ZST 升级包见 [0.10.0 发行记录](docs/image-0.10.0.md)。本轮构建证据见 [7.3.1 内核](docs/kernel-7.3.1.md)和[桌面 0.10.0](docs/desktop-0.10.0.md)，实际安装/启动验收与编译结果分开记录。
 
 本项目原名 Astgenne OS / Astesia Kernel。旧发行产物和验收记录中的名称、版本、哈希保留原样。新版本使用独立内核 ABI，兼容旧设置命令、私有配置和升级元包。详情见 [名称迁移](docs/rebranding-20261031.md)。

@@ -1,3 +1,5 @@
+> 2026-11-01 补充：默认预装官方 Connect 2.14.0 的新变体为 `20261101-0.10.0-pi-r1`，按用户要求仅重验 UEFI 下 7.3.1 与 Connect，见 [Pi 组件恢复](pi-desktop-components.md)。下面的文件哈希和六项验收属于此前的完整 0.10.0 基线。
+
 # ArclightOS 0.10.0 / AscalonKernel — 2026-11-01
 
 完整安装镜像：`arclightos-trixie-amd64-20261101-0.10.0.iso`，3,327,602,688 字节。
