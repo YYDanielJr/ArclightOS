@@ -17,6 +17,8 @@ p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('work',type=Path);p.add_argument('old_stage',type=Path);p.add_argument('new_stage',type=Path)
 p.add_argument('--desktop-update',action='store_true')
 p.add_argument('--installer-update',action='store_true')
+p.add_argument('--native-addition',action='append',default=[],metavar='PACKAGE',
+               help='Add only named authenticated APT packages, retaining every existing package')
 a=p.parse_args();work=a.work.resolve();old=a.old_stage.resolve();new=a.new_stage.resolve()
 assert os.geteuid()==0 and Path('/sys/class/dmi/id/product_serial').read_text().strip()=='ARCLIGHT_VALIDATION'
 assert old.is_relative_to(work/'build') and new.is_relative_to(work/'build') and not new.exists()
@@ -31,7 +33,14 @@ assert json.loads((old/'rootfs-complete.json').read_text())['receipt_sha256']==s
 def packages(value):return {(r['package'],r['architecture']):(r['version'],r['sha256']) for r in value['selected']}
 before=packages(previous);after=packages(current)
 changed={k for k in after if before.get(k)!=after[k]}
-if a.installer_update:
+if a.native_addition:
+    assert not a.installer_update and not a.desktop_update
+    added={(r['package'],r['architecture']) for r in current['selected'] if r['package'] in a.native_addition}
+    assert len(added)==len(set(a.native_addition))==len(a.native_addition)
+    assert set(after)-set(before)==changed==added and set(before)<=set(after)
+    assert all(r['provenance']=='authenticated-apt' for r in current['selected']
+               if (r['package'],r['architecture']) in added)
+elif a.installer_update:
     assert not a.desktop_update
     added={(n,'amd64') for n in ['qml6-module-qtquick','qml6-module-qtquick-window','qml6-module-qtqml',
         'qml6-module-qtqml-models','qml6-module-qtqml-workerscript']}

@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "base_iso": "2026-10-13-raspios-trixie-amd64.iso",
+  "base_iso_sha256": "8a1aadebed97378b02385c1e2ac50d77984eed0d07bfb6cc10ac50d9e74b8135",
+  "original_installed_packages": 1851,
+  "previous_image_packages": 1883,
+  "new_image_packages": 1884,
+  "only_added_package": {
+    "package": "rpi-connect",
+    "version": "2.14.0",
+    "sha256": "2643b5ae234745a4f63905e01a8b67cf37537a52c631556e9605c21ff0c6d379",
+    "provenance": "authenticated-apt"
+  },
+  "missing_official_desktop_packages": [],
+  "excluded_obsolete_kernel": [
+    "linux-image-6.12.111+deb13-amd64"
+  ],
+  "retained_unchanged_packages": 1883,
+  "old_pins_retired": [
+    "pishutdown=0.43",
+    "raspberrypi-net-mods=1.4.4",
+    "wayvnc=0.10.2-1+rpt1",
+    "rpi-connect/rpi-connect-lite forbidden"
+  ],
+  "unavailable_original_versions": [
+    {
+      "package": "pishutdown",
+      "iso_installed": "0.44",
+      "current_signed_repository": "0.43"
+    },
+    {
+      "package": "raspberrypi-net-mods",
+      "iso_installed": "1.4.5",
+      "current_signed_repository": "1.4.4"
+    }
+  ],
+  "official_current_indices_verified": true,
+  "account_linking_tested": false,
+  "remote_end_to_end_tested": false
+}

@@ -37,3 +37,7 @@
 ## 本机结果
 
 官方 `rpi-connect 2.14.0` 已安装，只有一个新增包，没有移除或升级其他包；`dpkg --audit` 无输出。旧 APT 规则及系统/当前用户面板配置已备份到 `/var/backups/arclight-pi-components-20261101/`，面板入口已通过官方 `wfpanelctl connect install` 在当前会话加载。Connect 服务仍处于未开启状态，未执行账号绑定。6 项策略回归检查通过，覆盖只删除旧 pin、保留个人规则/小部件、重复执行和备份。
+
+## 本轮验证范围调整
+
+用户明确要求本轮只检查 UEFI 下最新 7.3.1 内核启动后存在 Connect，不重复 BIOS、回退内核或离线安装。使用已验收 0.10.0 ISO 增量加入认证官方包，不重新安装全部 1883 个原有包，也不重编译未变的组件。`derive-driver-helper-root.py --native-addition rpi-connect` 要求全部既有包版本/哈希不变、差集精确为指定官方 APT 包。保留原镜像的六项历史验收；新 ISO 只报告本轮实际执行的 UEFI Live 范围，不继承为六项新验收通过。
